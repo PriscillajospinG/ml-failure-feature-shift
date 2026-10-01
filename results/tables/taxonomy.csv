@@ -1,0 +1,6 @@
+regime,False,True,All
+Benign drift,0,339,339
+Concept (Y|X) failure,72,770,842
+Harmful covariate shift,26,244,270
+Stable,106,0,106
+All,204,1353,1557

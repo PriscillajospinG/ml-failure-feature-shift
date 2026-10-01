@@ -1,0 +1,58 @@
+{
+  "n_rows": 1557,
+  "n_pairs": 173,
+  "n_seeds": 3,
+  "harm_rate": 0.714193962748876,
+  "delta_mean": 0.10928078357336861,
+  "delta_max": 0.9084969696969696,
+  "frac_negative": 0.17469492614001284,
+  "high_drift_rate": 0.8689788053949904,
+  "harm_given_high": 0.7494456762749445,
+  "harm_given_low": 0.4803921568627451,
+  "regimes": {
+    "Concept (Y|X) failure": 842,
+    "Benign drift": 339,
+    "Harmful covariate shift": 270,
+    "Stable": 106
+  },
+  "mae": {
+    "Data-only signals": 0.13319463777045332,
+    "+ IWS": 0.127282979692102,
+    "All signals (harm score)": 0.12022979635856271
+  },
+  "yx_dominant_overall": 0.7571942446043165,
+  "synthetic_check": {
+    "delta": {
+      "concept": 0.2884,
+      "important": -0.1102,
+      "irrelevant": 0.0102,
+      "prior": 0.0151,
+      "spread": 0.1356
+    },
+    "cov_part": {
+      "concept": -0.0031,
+      "important": -0.0734,
+      "irrelevant": 0.0395,
+      "prior": 0.0108,
+      "spread": 0.107
+    },
+    "yx_part": {
+      "concept": 0.2915,
+      "important": -0.0368,
+      "irrelevant": -0.0293,
+      "prior": 0.0043,
+      "spread": 0.0286
+    }
+  },
+  "frac_saturated": 0.6820809248554913,
+  "harm_given_saturated": 0.7919020715630886,
+  "rho_iwsks_unsaturated": 0.3021259093017954,
+  "rho_dcauc_unsaturated": 0.14660443667905526,
+  "rho_iwsks_saturated": 0.2966278156138105,
+  "rho_dcauc_saturated": 0.2217257841524035,
+  "decomposition_overlap": {
+    "n": 271,
+    "yx_share": 0.5882179563043828,
+    "yx_dominant": 0.6199261992619927
+  }
+}

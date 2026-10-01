@@ -1,0 +1,14 @@
+\begin{tabular}{lcccc}
+\toprule
+Method & $\rho$ & AUROC & AUPRC & FPR@90 \\
+\midrule
+Domain-clf. AUC & 0.40 & 0.66 & 0.81 & 0.75 \\
+ATC drop & 0.07 & 0.58 & 0.80 & 0.95 \\
+Importance-wtd. drop & 0.12 & 0.62 & 0.79 & 0.83 \\
+IWS-KS$^\dagger$ & 0.40 & 0.70 & 0.86 & 0.76 \\
+\midrule \multicolumn{5}{l}{\emph{Meta-regressor, leave-one-dataset-out}} \\
+Data-only signals & 0.13 & 0.55 & 0.75 & 0.84 \\
+Data-only + IWS & 0.22 & 0.59 & 0.78 & 0.86 \\
+All signals (harm score)$^\dagger$ & 0.34 & 0.67 & 0.83 & 0.81 \\
+\bottomrule
+\end{tabular}
