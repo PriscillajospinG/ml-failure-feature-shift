@@ -14,4 +14,4 @@ python analysis.py                             # tables -> results/tables, figur
 python case_study.py                           # per-feature case-study figure
 python ablation_samplesize.py                  # target sample-size ablation (adds a table)
 python analysis.py                             # refresh tables
-cd ../paper && cp ../figures/*.pdf figures/ && cp ../results/tables/*.tex tables/ && latexmk -pdf -quiet main.tex
+cd ../paper && cp ../figures/*.pdf figures/ && cp ../results/tables/*.tex tables/ && latexmk -pdf -quiet main_modular.tex && python3 ../scripts/make_single_file.py && latexmk -pdf -quiet main.tex

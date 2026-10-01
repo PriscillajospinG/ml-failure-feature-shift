@@ -231,25 +231,7 @@ Table~\ref{tab:corr} ranks all signals. The model-aware \iws{} variants lead: \i
 \label{tab:corr}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{lcccc}
-\toprule
-Signal & $\rho$ pooled [95\% CI] & $\bar\rho$ within & AUROC & AUPRC \\
-\midrule
-IWS-Wass.$^\dagger$ (M) & \underline{0.42} [0.37, 0.46] & \underline{0.36} & 0.69 & 0.84 \\
-Domain-clf. AUC (D) & 0.40 [0.35, 0.44] & 0.29 & 0.66 & 0.81 \\
-IWS-KS$^\dagger$ (M) & 0.40 [0.35, 0.44] & 0.34 & \underline{0.70} & \underline{0.86} \\
-KS (max) (D) & 0.35 [0.30, 0.39] & 0.28 & 0.62 & 0.80 \\
-MMD$^2$ (D) & 0.33 [0.28, 0.37] & 0.26 & 0.63 & 0.82 \\
-Wasserstein (mean) (D) & 0.31 [0.26, 0.34] & 0.27 & 0.65 & 0.82 \\
-Prediction shift (O) & 0.28 [0.23, 0.33] & 0.27 & 0.60 & 0.81 \\
-Disagreement incr. (O) & 0.25 [0.20, 0.30] & 0.29 & 0.63 & 0.82 \\
-PSI (mean) (D) & 0.23 [0.17, 0.27] & 0.22 & 0.65 & 0.80 \\
-KS (mean) (D) & 0.22 [0.18, 0.26] & 0.30 & 0.64 & 0.81 \\
-Importance-wtd. drop (O) & 0.12 [0.07, 0.17] & 0.18 & 0.62 & 0.79 \\
-ATC drop (O) & 0.07 [0.02, 0.12] & 0.08 & 0.58 & 0.80 \\
-Confidence drop (DoC) (O) & 0.07 [0.02, 0.12] & 0.07 & 0.60 & 0.82 \\
-\bottomrule
-\end{tabular}
+\input{tables/e1_correlation.tex}
 \end{table}
 
 \begin{figure*}[t]
@@ -268,19 +250,7 @@ Confidence-based estimators, which are among the best label-free accuracy predic
 \caption{Within-dataset Spearman $\rho$ with $\Delta$ (all models and seeds).}
 \label{tab:perds}
 \footnotesize
-\begin{tabular}{lccccc}
-\toprule
-Dataset & KS & DC-AUC & ATC & IW-drop & IWS-KS \\
-\midrule
-Adult & 0.02 & 0.05 & \underline{0.87} & 0.81 & 0.14 \\
-COMPAS & 0.22 & \underline{0.32} & 0.28 & 0.27 & 0.26 \\
-Housing & 0.44 & 0.38 & 0.26 & 0.04 & \underline{0.53} \\
-Bank & \underline{0.45} & 0.31 & -0.12 & 0.01 & 0.44 \\
-Elec2 & 0.46 & 0.15 & -0.50 & -0.01 & \underline{0.59} \\
-Airlines & -0.22 & \underline{0.20} & -0.03 & -0.04 & -0.13 \\
-Covertype & \underline{0.70} & 0.65 & 0.01 & 0.21 & 0.57 \\
-\bottomrule
-\end{tabular}
+\input{tables/e1_per_dataset.tex}
 \end{table}
 
 \subsection{Controlled shifts: when does drift hurt? (RQ2)}
@@ -322,19 +292,7 @@ On the natural testbed (Fig.~\ref{fig:decomp}, Table~\ref{tab:decomp}) the resid
 \label{tab:decomp}
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{lrrrrr}
-\toprule
-Dataset & Evals & Harmful & $\bar\Delta_{\text{harm}}$ & $Y|X$ share & $|\pi_T-\pi_S|$ \\
-\midrule
-Adult & 306 & 49\% & 8.8 & 55\% & 0.134 \\
-COMPAS & 126 & 56\% & 8.6 & 69\% & 0.141 \\
-Housing & 126 & 81\% & 17.4 & 67\% & 0.246 \\
-Bank & 135 & 79\% & 26.5 & 94\% & 0.125 \\
-Elec2 & 252 & 86\% & 13.0 & 78\% & 0.043 \\
-Airlines & 504 & 72\% & 11.7 & 70\% & 0.117 \\
-Covertype & 108 & 97\% & 41.4 & 86\% & 0.267 \\
-\bottomrule
-\end{tabular}
+\input{tables/e3_decomposition.tex}
 \end{table}
 
 \subsection{Can signals be combined into a harm score? (RQ4)}
@@ -346,20 +304,7 @@ Table~\ref{tab:harm} compares single signals with a meta-regressor evaluated lea
 \label{tab:harm}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{lcccc}
-\toprule
-Method & $\rho$ & AUROC & AUPRC & FPR@90 \\
-\midrule
-Domain-clf. AUC & 0.40 & 0.66 & 0.81 & 0.75 \\
-ATC drop & 0.07 & 0.58 & 0.80 & 0.95 \\
-Importance-wtd. drop & 0.12 & 0.62 & 0.79 & 0.83 \\
-IWS-KS$^\dagger$ & 0.40 & 0.70 & 0.86 & 0.76 \\
-\midrule \multicolumn{5}{l}{\emph{Meta-regressor, leave-one-dataset-out}} \\
-Data-only signals & 0.13 & 0.55 & 0.75 & 0.84 \\
-Data-only + IWS & 0.22 & 0.59 & 0.78 & 0.86 \\
-All signals (harm score)$^\dagger$ & 0.34 & 0.67 & 0.83 & 0.81 \\
-\bottomrule
-\end{tabular}
+\input{tables/e4_harm_score.tex}
 \end{table}
 
 \begin{figure}[t]
@@ -381,16 +326,7 @@ All signals (harm score)$^\dagger$ & 0.34 & 0.67 & 0.83 & 0.81 \\
 \label{tab:nsize}
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{rcccc}
-\toprule
-$n_T$ & KS (mean) & DC-AUC & ATC drop & IWS-KS$^\dagger$ \\
-\midrule
-100 & 0.28 / 0.72 & 0.42 / 0.68 & 0.06 / 0.59 & 0.47 / 0.73 \\
-300 & 0.30 / 0.74 & 0.43 / 0.69 & 0.13 / 0.64 & 0.46 / 0.72 \\
-1{,}000 & 0.30 / 0.73 & 0.43 / 0.69 & 0.16 / 0.64 & 0.46 / 0.72 \\
-5{,}000 & 0.30 / 0.73 & 0.43 / 0.70 & 0.15 / 0.64 & 0.45 / 0.72 \\
-\bottomrule
-\end{tabular}
+\input{tables/e5_sample_size.tex}
 \end{table}
 
 % =====================================================================
@@ -404,20 +340,7 @@ $n_T$ & KS (mean) & DC-AUC & ATC drop & IWS-KS$^\dagger$ \\
 \label{tab:tax}
 \footnotesize
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{lrrrr}
-\toprule
-Dataset & Stable & Benign drift & Harmful cov. & Conditional \\
-\midrule
-Adult & 19\% & 33\% & 21\% & 28\% \\
-COMPAS & 39\% & 6\% & 10\% & 45\% \\
-Housing & 0\% & 19\% & 17\% & 63\% \\
-Bank & 0\% & 21\% & 2\% & 77\% \\
-Elec2 & 0\% & 14\% & 14\% & 72\% \\
-Airlines & 0\% & 28\% & 24\% & 48\% \\
-Covertype & 0\% & 3\% & 10\% & 87\% \\
-\midrule All & 7\% & 22\% & 17\% & 54\% \\
-\bottomrule
-\end{tabular}
+\input{tables/taxonomy.tex}
 \end{table}
 
 \textit{Practical guidance.} (i) Replace raw per-feature drift dashboards with importance-weighted drift: it costs one permutation-importance pass per model and filters out drift in ignored features. (ii) Do not rely on model confidence for tabular monitoring; ATC and DoC were wrong-signed on temporal data. (iii) Because conditional shift dominates, budget for a small stream of delayed labels; no amount of unlabelled monitoring recovers a change in $P(Y|X)$. (iv) Treat a saturated domain classifier as ``the data changed'', never as ``the model broke''.
@@ -430,240 +353,7 @@ Covertype & 0\% & 3\% & 10\% & 87\% \\
 Feature-space change predicts model failure only weakly on natural tabular shifts. Drift is nearly universal, a quarter of drift alarms are benign, and most harmful drops come from a change in $P(Y|X)$ that unlabelled data cannot reveal. Weighting drift by what the model actually uses (\iws{}) is the most reliable label-free signal we tested and is trivial to deploy, but the dominant failure mode calls for monitoring that combines model-aware drift with a small budget of fresh labels. Code, raw results and scripts that regenerate every table and figure are released with the paper.
 
 \balance
-% Bibliography embedded so this file compiles without refs.bib
-% Generated by IEEEtran.bst, version: 1.14 (2015/08/26)
-\begin{thebibliography}{10}
-\providecommand{\url}[1]{#1}
-\csname url@samestyle\endcsname
-\providecommand{\newblock}{\relax}
-\providecommand{\bibinfo}[2]{#2}
-\providecommand{\BIBentrySTDinterwordspacing}{\spaceskip=0pt\relax}
-\providecommand{\BIBentryALTinterwordstretchfactor}{4}
-\providecommand{\BIBentryALTinterwordspacing}{\spaceskip=\fontdimen2\font plus
-\BIBentryALTinterwordstretchfactor\fontdimen3\font minus
-  \fontdimen4\font\relax}
-\providecommand{\BIBforeignlanguage}[2]{{%
-\expandafter\ifx\csname l@#1\endcsname\relax
-\typeout{** WARNING: IEEEtran.bst: No hyphenation pattern has been}%
-\typeout{** loaded for the language `#1'. Using the pattern for}%
-\typeout{** the default language instead.}%
-\else
-\language=\csname l@#1\endcsname
-\fi
-#2}}
-\providecommand{\BIBdecl}{\relax}
-\BIBdecl
-
-\bibitem{quinonero2009dataset}
-J.~Qui{\~n}onero-Candela, M.~Sugiyama, A.~Schwaighofer, and N.~D. Lawrence,
-  Eds., \emph{Dataset Shift in Machine Learning}.\hskip 1em plus 0.5em minus
-  0.4em\relax MIT Press, 2009.
-
-\bibitem{moreno2012unifying}
-J.~G. Moreno-Torres, T.~Raeder, R.~Alaiz-Rodr{\'\i}guez, N.~V. Chawla, and
-  F.~Herrera, ``A unifying view on dataset shift in classification,''
-  \emph{Pattern Recognition}, vol.~45, no.~1, pp. 521--530, 2012.
-
-\bibitem{gretton2012kernel}
-A.~Gretton, K.~M. Borgwardt, M.~J. Rasch, B.~Sch{\"o}lkopf, and A.~Smola, ``A
-  kernel two-sample test,'' \emph{Journal of Machine Learning Research},
-  vol.~13, pp. 723--773, 2012.
-
-\bibitem{lopezpaz2017c2st}
-D.~Lopez-Paz and M.~Oquab, ``Revisiting classifier two-sample tests,'' in
-  \emph{International Conference on Learning Representations (ICLR)}, 2017.
-
-\bibitem{rabanser2019failing}
-S.~Rabanser, S.~G{\"u}nnemann, and Z.~C. Lipton, ``Failing loudly: An empirical
-  study of methods for detecting dataset shift,'' in \emph{Advances in Neural
-  Information Processing Systems (NeurIPS)}, vol.~32, 2019.
-
-\bibitem{liu2023need}
-J.~Liu, T.~Wang, P.~Cui, and H.~Namkoong, ``On the need for a language
-  describing distribution shifts: Illustrations on tabular datasets,'' in
-  \emph{Advances in Neural Information Processing Systems (NeurIPS), Datasets
-  and Benchmarks Track}, 2023.
-
-\bibitem{gardner2023tableshift}
-J.~Gardner, Z.~Popovic, and L.~Schmidt, ``Benchmarking distribution shift in
-  tabular data with {TableShift},'' in \emph{Advances in Neural Information
-  Processing Systems (NeurIPS), Datasets and Benchmarks Track}, 2023.
-
-\bibitem{gama2004ddm}
-J.~Gama, P.~Medas, G.~Castillo, and P.~Rodrigues, ``Learning with drift
-  detection,'' in \emph{Advances in Artificial Intelligence -- SBIA 2004}, ser.
-  Lecture Notes in Computer Science, vol. 3171.\hskip 1em plus 0.5em minus
-  0.4em\relax Springer, 2004, pp. 286--295.
-
-\bibitem{gama2014survey}
-J.~Gama, I.~{\v{Z}}liobait{\.e}, A.~Bifet, M.~Pechenizkiy, and A.~Bouchachia,
-  ``A survey on concept drift adaptation,'' \emph{ACM Computing Surveys},
-  vol.~46, no.~4, pp. 44:1--44:37, 2014.
-
-\bibitem{lu2019learning}
-J.~Lu, A.~Liu, F.~Dong, F.~Gu, J.~Gama, and G.~Zhang, ``Learning under concept
-  drift: A review,'' \emph{IEEE Transactions on Knowledge and Data
-  Engineering}, vol.~31, no.~12, pp. 2346--2363, 2019.
-
-\bibitem{webb2016characterizing}
-G.~I. Webb, R.~Hyde, H.~Cao, H.~L. Nguyen, and F.~Petitjean, ``Characterizing
-  concept drift,'' \emph{Data Mining and Knowledge Discovery}, vol.~30, no.~4,
-  pp. 964--994, 2016.
-
-\bibitem{garg2022atc}
-S.~Garg, S.~Balakrishnan, Z.~C. Lipton, B.~Neyshabur, and H.~Sedghi,
-  ``Leveraging unlabeled data to predict out-of-distribution performance,'' in
-  \emph{International Conference on Learning Representations (ICLR)}, 2022.
-
-\bibitem{guillory2021doc}
-D.~Guillory, V.~Shankar, S.~Ebrahimi, T.~Darrell, and L.~Schmidt, ``Predicting
-  with confidence on unseen distributions,'' in \emph{Proceedings of the
-  IEEE/CVF International Conference on Computer Vision (ICCV)}, 2021, pp.
-  1134--1144.
-
-\bibitem{baek2022agreement}
-C.~Baek, Y.~Jiang, A.~Raghunathan, and J.~Z. Kolter, ``Agreement-on-the-line:
-  Predicting the performance of neural networks under distribution shift,'' in
-  \emph{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~35,
-  2022.
-
-\bibitem{miller2021accuracy}
-J.~Miller, R.~Taori, A.~Raghunathan, S.~Sagawa, P.~W. Koh, V.~Shankar,
-  P.~Liang, Y.~Carmon, and L.~Schmidt, ``Accuracy on the line: On the strong
-  correlation between out-of-distribution and in-distribution generalization,''
-  in \emph{Proceedings of the 38th International Conference on Machine Learning
-  (ICML)}, ser. PMLR, vol. 139, 2021.
-
-\bibitem{shimodaira2000improving}
-H.~Shimodaira, ``Improving predictive inference under covariate shift by
-  weighting the log-likelihood function,'' \emph{Journal of Statistical
-  Planning and Inference}, vol.~90, no.~2, pp. 227--244, 2000.
-
-\bibitem{sugiyama2007covariate}
-M.~Sugiyama, M.~Krauledat, and K.-R. M{\"u}ller, ``Covariate shift adaptation
-  by importance weighted cross validation,'' \emph{Journal of Machine Learning
-  Research}, vol.~8, pp. 985--1005, 2007.
-
-\bibitem{bialek2025pape}
-J.~Bia{\l}ek, J.~Kivim{\"a}ki, W.~Kuberski, and N.~Perrakis, ``Estimating model
-  performance under covariate shift without labels,'' in \emph{Advances in
-  Neural Information Processing Systems (NeurIPS)}, 2025.
-
-\bibitem{koh2021wilds}
-P.~W. Koh \emph{et~al.}, ``{WILDS}: A benchmark of in-the-wild distribution
-  shifts,'' in \emph{Proceedings of the 38th International Conference on
-  Machine Learning (ICML)}, ser. PMLR, vol. 139, 2021.
-
-\bibitem{podkopaev2022tracking}
-A.~Podkopaev and A.~Ramdas, ``Tracking the risk of a deployed model and
-  detecting harmful distribution shifts,'' in \emph{International Conference on
-  Learning Representations (ICLR)}, 2022.
-
-\bibitem{ginsberg2023detectron}
-T.~Ginsberg, Z.~Liang, and R.~G. Krishnan, ``A learning based hypothesis test
-  for harmful covariate shift,'' in \emph{International Conference on Learning
-  Representations (ICLR)}, 2023.
-
-\bibitem{amoukou2024sequential}
-S.~I. Amoukou, T.~Bewley, S.~Mishra, F.~Lecue, D.~Magazzeni, and M.~Veloso,
-  ``Sequential harmful shift detection without labels,'' in \emph{Advances in
-  Neural Information Processing Systems (NeurIPS)}, 2024.
-
-\bibitem{zhang2023why}
-H.~Zhang, H.~Singh, M.~Ghassemi, and S.~Joshi, ````{W}hy did the model fail?'':
-  Attributing model performance changes to distribution shifts,'' in
-  \emph{Proceedings of the 40th International Conference on Machine Learning
-  (ICML)}, ser. PMLR, vol. 202, 2023.
-
-\bibitem{cai2023diagnosing}
-T.~T. Cai, H.~Namkoong, and S.~Yadlowsky, ``Diagnosing model performance under
-  distribution shift,'' arXiv:2303.02011, 2023.
-
-\bibitem{kulinski2023explaining}
-S.~Kulinski and D.~I. Inouye, ``Towards explaining distribution shifts,'' in
-  \emph{Proceedings of the 40th International Conference on Machine Learning
-  (ICML)}, ser. PMLR, vol. 202, 2023.
-
-\bibitem{mougan2022explanation}
-C.~Mougan, K.~Broelemann, G.~Kasneci, T.~Tiropanis, and S.~Staab, ``Explanation
-  shift: Detecting distribution shifts on tabular data via the explanation
-  space,'' in \emph{NeurIPS Workshop on Distribution Shifts: Connecting Methods
-  and Applications}, 2022.
-
-\bibitem{lundberg2017unified}
-S.~M. Lundberg and S.-I. Lee, ``A unified approach to interpreting model
-  predictions,'' in \emph{Advances in Neural Information Processing Systems
-  (NeurIPS)}, vol.~30, 2017.
-
-\bibitem{zafar2026fmmo}
-M.~R. Zafar, A.~El-Sharif, and N.~Khan, ``{FMMO}: Detecting the divergence
-  between local attribution and global drift,'' arXiv:2609.06173, 2026.
-
-\bibitem{lipton2018bbse}
-Z.~C. Lipton, Y.-X. Wang, and A.~J. Smola, ``Detecting and correcting for label
-  shift with black box predictors,'' in \emph{Proceedings of the 35th
-  International Conference on Machine Learning (ICML)}, ser. PMLR, vol.~80,
-  2018.
-
-\bibitem{fisher2019all}
-A.~Fisher, C.~Rudin, and F.~Dominici, ``All models are wrong, but many are
-  useful: Learning a variable's importance by studying an entire class of
-  prediction models simultaneously,'' \emph{Journal of Machine Learning
-  Research}, vol.~20, no. 177, pp. 1--81, 2019.
-
-\bibitem{breiman2001random}
-L.~Breiman, ``Random forests,'' \emph{Machine Learning}, vol.~45, no.~1, pp.
-  5--32, 2001.
-
-\bibitem{kohavi1996scaling}
-R.~Kohavi, ``Scaling up the accuracy of naive-{B}ayes classifiers: A
-  decision-tree hybrid,'' in \emph{Proceedings of the 2nd International
-  Conference on Knowledge Discovery and Data Mining (KDD)}, 1996, pp. 202--207.
-
-\bibitem{angwin2016machine}
-J.~Angwin, J.~Larson, S.~Mattu, and L.~Kirchner, ``Machine bias,'' ProPublica,
-  2016.
-
-\bibitem{pace1997sparse}
-R.~K. Pace and R.~Barry, ``Sparse spatial autoregressions,'' \emph{Statistics
-  \& Probability Letters}, vol.~33, no.~3, pp. 291--297, 1997.
-
-\bibitem{moro2014data}
-S.~Moro, P.~Cortez, and P.~Rita, ``A data-driven approach to predict the
-  success of bank telemarketing,'' \emph{Decision Support Systems}, vol.~62,
-  pp. 22--31, 2014.
-
-\bibitem{harries1999splice}
-M.~Harries, ``{SPLICE-2} comparative evaluation: Electricity pricing,'' The
-  University of New South Wales, Tech. Rep., 1999.
-
-\bibitem{ikonomovska2011learning}
-E.~Ikonomovska, J.~Gama, and S.~D{\v{z}}eroski, ``Learning model trees from
-  evolving data streams,'' \emph{Data Mining and Knowledge Discovery}, vol.~23,
-  no.~1, pp. 128--168, 2011.
-
-\bibitem{blackard1999comparative}
-J.~A. Blackard and D.~J. Dean, ``Comparative accuracies of artificial neural
-  networks and discriminant analysis in predicting forest cover types from
-  cartographic variables,'' \emph{Computers and Electronics in Agriculture},
-  vol.~24, no.~3, pp. 131--151, 1999.
-
-\bibitem{grinsztajn2022tree}
-L.~Grinsztajn, E.~Oyallon, and G.~Varoquaux, ``Why do tree-based models still
-  outperform deep learning on typical tabular data?'' in \emph{Advances in
-  Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks
-  Track}, 2022.
-
-\bibitem{ke2017lightgbm}
-G.~Ke, Q.~Meng, T.~Finley, T.~Wang, W.~Chen, W.~Ma, Q.~Ye, and T.-Y. Liu,
-  ``{LightGBM}: A highly efficient gradient boosting decision tree,'' in
-  \emph{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~30,
-  2017.
-
-\bibitem{pedregosa2011scikit}
-F.~Pedregosa \emph{et~al.}, ``Scikit-learn: Machine learning in {P}ython,''
-  \emph{Journal of Machine Learning Research}, vol.~12, pp. 2825--2830, 2011.
-
-\end{thebibliography}
+\bibliographystyle{IEEEtran}
+\bibliography{refs}
 
 \end{document}

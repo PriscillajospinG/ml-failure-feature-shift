@@ -42,7 +42,7 @@ scripts/
   run_all.sh            reproduce everything end to end
 results/                raw per-evaluation CSVs, results/tables/*.tex|csv, summary.json
 figures/                all figures (PDF + PNG)
-paper/                  main.tex, refs.bib, figures/, tables/, main.pdf
+paper/                  main.tex (single self-contained file, upload this to Overleaf), main_modular.tex (editable source), refs.bib, figures/, tables/, main.pdf
 ```
 
 ## Reproduce
@@ -62,7 +62,7 @@ python run_synthetic.py
 python analysis.py
 python case_study.py
 python ablation_samplesize.py
-cd ../paper && latexmk -pdf main.tex
+cd ../paper && latexmk -pdf main_modular.tex && python3 ../scripts/make_single_file.py
 ```
 
 ## Datasets
@@ -83,3 +83,7 @@ Raw data files are not committed (see `.gitignore`); `scripts/download_data.sh` 
 
 - Fill in author names and affiliations in `paper/main.tex` (or keep them anonymous if the venue is double-blind).
 - Check the target conference's page limit and whether references count toward it.
+
+## Overleaf
+
+`paper/main.tex` is self-contained (tables and bibliography are inlined). Upload only `main.tex` and the `figures/` folder (5 PDFs) and compile with pdfLaTeX. Edit `main_modular.tex` and re-run `scripts/make_single_file.py` to regenerate it.
