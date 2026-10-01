@@ -1,9 +1,15 @@
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
+\usepackage{mathptmx} % Times for text and math: one font family throughout
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\makeatletter
+\let\oldfsruled\fs@ruled
+\renewcommand\fs@ruled{\oldfsruled\def\@fs@cfont{\normalfont}}
+\makeatother
+\restylefloat{algorithm}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{multirow}
@@ -13,7 +19,17 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{balance}
 \usepackage{amsthm}
+\newtheoremstyle{plainhead}{3pt}{3pt}{\itshape}{}{\normalfont}{.}{.5em}{}
+\theoremstyle{plainhead}
 \newtheorem{proposition}{Proposition}
+\algrenewcommand\algorithmicrequire{Require:}
+\algrenewcommand\algorithmicfor{for}
+\algrenewcommand\algorithmicdo{do}
+\algrenewcommand\algorithmicend{end}
+\algrenewcommand\algorithmicreturn{return}
+\algrenewcommand\algorithmicwhile{while}
+\algrenewcommand\algorithmicif{if}
+\algrenewcommand\algorithmicthen{then}
 
 \newcommand{\iws}{\textsc{IWS}}
 \newcommand{\pp}{\,pp}
@@ -42,9 +58,8 @@ email@domain}}
 Deployed models are routinely monitored with drift detectors that raise an alarm whenever the input distribution changes, yet a change in $P(X)$ need not change the error of the model. We ask which measurable feature-space changes actually predict prediction degradation, and why the rest do not. We assemble a testbed of 173 natural source$\to$target shifts drawn from seven public tabular datasets (demographic, geographic, temporal and carrier splits), train three model classes with three seeds each (1{,}557 evaluations), and compare thirteen label-free signals against the true accuracy drop. We also propose \emph{Importance-Weighted Shift} (\iws{}), which weights each feature's drift by the model's own reliance on that feature, and a reweighting decomposition that separates the covariate part of a drop from the conditional part. Three findings stand out. First, drift is nearly universal but weakly informative: a domain classifier separates source from target with AUC $\ge 0.95$ in 68\% of pairs, while 25\% of drifted evaluations show no harm and 48\% of low-drift evaluations still fail. Second, \iws{} gives the best harm detection among single signals (AUROC 0.70, AUPRC 0.86) and the highest rank correlation with the drop ($\rho=0.42$), whereas confidence-based estimators that work well on images correlate weakly on tabular shifts ($\rho \approx 0.07$). Third, in 76\% of harmful evaluations the conditional part $P(Y|X)$ dominates the covariate part, and controlled experiments confirm that such concept shift is invisible to every label-free signal. We release code and results to support reproducible monitoring research.
 \end{abstract}
 
-\begin{IEEEkeywords}
-distribution shift, concept drift, model monitoring, performance estimation, tabular data, feature importance
-\end{IEEEkeywords}
+\par\vspace{4pt}\noindent{\normalfont\small\textit{Index Terms}---
+distribution shift, concept drift, model monitoring, performance estimation, tabular data, feature importance}\par
 
 % =====================================================================
 \section{Introduction}
@@ -55,31 +70,31 @@ The two questions come apart for two reasons. A change confined to features the 
 
 This paper provides that measurement and makes four contributions:
 \begin{enumerate}
-  \item \textbf{A shift--degradation testbed.} 173 natural source$\to$target pairs from seven public tabular datasets, three model classes, three seeds, 1{,}557 evaluations, each with its true accuracy drop and 13 label-free signals.
-  \item \textbf{Importance-Weighted Shift (\iws{}).} A simple model-aware statistic that weights per-feature drift by permutation importance. It is the best single predictor of harm in our testbed and costs one importance computation per deployed model.
-  \item \textbf{A covariate/conditional decomposition} of each drop by density-ratio reweighting, validated on synthetic shifts with known ground truth, showing that conditional shift dominates natural tabular failures.
-  \item \textbf{A failure taxonomy} (stable, benign drift, harmful covariate shift, conditional failure) with practical guidance on when a drift alarm should trigger retraining.
+  \item \textit{A shift--degradation testbed.} 173 natural source$\to$target pairs from seven public tabular datasets, three model classes, three seeds, 1{,}557 evaluations, each with its true accuracy drop and 13 label-free signals.
+  \item \textit{Importance-Weighted Shift (\iws{}).} A simple model-aware statistic that weights per-feature drift by permutation importance. It is the best single predictor of harm in our testbed and costs one importance computation per deployed model.
+  \item \textit{A covariate/conditional decomposition} of each drop by density-ratio reweighting, validated on synthetic shifts with known ground truth, showing that conditional shift dominates natural tabular failures.
+  \item \textit{A failure taxonomy} (stable, benign drift, harmful covariate shift, conditional failure) with practical guidance on when a drift alarm should trigger retraining.
 \end{enumerate}
 
 % =====================================================================
 \section{Related Work}
 % =====================================================================
-\textbf{Shift detection.} Classical concept-drift research monitors streams for changes~\cite{gama2004ddm,gama2014survey,lu2019learning,webb2016characterizing}. For batch shift, Rabanser~\textit{et~al.}~\cite{rabanser2019failing} benchmarked two-sample tests on learned representations and found domain classifiers and MMD~\cite{gretton2012kernel} effective at \emph{detecting} shift. Detection, however, is not harm: they report shift presence, not its effect on error.
+\textit{Shift detection.} Classical concept-drift research monitors streams for changes~\cite{gama2004ddm,gama2014survey,lu2019learning,webb2016characterizing}. For batch shift, Rabanser~\textit{et~al.}~\cite{rabanser2019failing} benchmarked two-sample tests on learned representations and found domain classifiers and MMD~\cite{gretton2012kernel} effective at \emph{detecting} shift. Detection, however, is not harm: they report shift presence, not its effect on error.
 
-\textbf{Label-free performance estimation.} Several methods predict target accuracy from unlabeled data: Average Thresholded Confidence (ATC)~\cite{garg2022atc}, difference of confidences~\cite{guillory2021doc}, agreement-on-the-line~\cite{baek2022agreement,miller2021accuracy}, and importance-weighted estimators under covariate shift~\cite{shimodaira2000improving,sugiyama2007covariate}, recently extended with calibration in PAPE~\cite{bialek2025pape}. Most were validated on image benchmarks such as WILDS~\cite{koh2021wilds}; their behaviour on natural tabular shifts with strong conditional components is less understood.
+\textit{Label-free performance estimation.} Several methods predict target accuracy from unlabeled data: Average Thresholded Confidence (ATC)~\cite{garg2022atc}, difference of confidences~\cite{guillory2021doc}, agreement-on-the-line~\cite{baek2022agreement,miller2021accuracy}, and importance-weighted estimators under covariate shift~\cite{shimodaira2000improving,sugiyama2007covariate}, recently extended with calibration in PAPE~\cite{bialek2025pape}. Most were validated on image benchmarks such as WILDS~\cite{koh2021wilds}; their behaviour on natural tabular shifts with strong conditional components is less understood.
 
-\textbf{Harmful-shift testing.} Podkopaev and Ramdas~\cite{podkopaev2022tracking} test for a rise in risk with labels; Detectron~\cite{ginsberg2023detectron} and Amoukou~\textit{et~al.}~\cite{amoukou2024sequential} detect harmful shift without labels. These methods output an alarm, not an explanation of which features or which kind of shift caused it.
+\textit{Harmful-shift testing.} Podkopaev and Ramdas~\cite{podkopaev2022tracking} test for a rise in risk with labels; Detectron~\cite{ginsberg2023detectron} and Amoukou~\textit{et~al.}~\cite{amoukou2024sequential} detect harmful shift without labels. These methods output an alarm, not an explanation of which features or which kind of shift caused it.
 
-\textbf{Explaining shifts and drops.} Zhang~\textit{et~al.}~\cite{zhang2023why} attribute a drop to shifted causal mechanisms with Shapley values; DISDE~\cite{cai2023diagnosing} splits a drop into harder examples, conditional shift and unseen examples; Kulinski and Inouye~\cite{kulinski2023explaining} explain shifts via transport maps. Explanation shift~\cite{mougan2022explanation} monitors SHAP~\cite{lundberg2017unified} distributions, while FMMO~\cite{zafar2026fmmo} shows local attributions can stay stable as error rises. Our work is complementary: rather than proposing one more detector, we measure which signals track degradation across many natural shifts, and we explain the misses with a decomposition.
+\textit{Explaining shifts and drops.} Zhang~\textit{et~al.}~\cite{zhang2023why} attribute a drop to shifted causal mechanisms with Shapley values; DISDE~\cite{cai2023diagnosing} splits a drop into harder examples, conditional shift and unseen examples; Kulinski and Inouye~\cite{kulinski2023explaining} explain shifts via transport maps. Explanation shift~\cite{mougan2022explanation} monitors SHAP~\cite{lundberg2017unified} distributions, while FMMO~\cite{zafar2026fmmo} shows local attributions can stay stable as error rises. Our work is complementary: rather than proposing one more detector, we measure which signals track degradation across many natural shifts, and we explain the misses with a decomposition.
 
 % =====================================================================
 \section{Problem Formulation}
 % =====================================================================
-Let $P_S(X,Y)$ be the source distribution on which a classifier $f$ is trained, and $P_T(X,Y)$ a deployment distribution. We observe labelled source validation data $\{(x_i,y_i)\}_{i=1}^{n_S}$ and \emph{unlabelled} target features $\{x_j\}_{j=1}^{n_T}$. The \textbf{accuracy drop} is
+Let $P_S(X,Y)$ be the source distribution on which a classifier $f$ is trained, and $P_T(X,Y)$ a deployment distribution. We observe labelled source validation data $\{(x_i,y_i)\}_{i=1}^{n_S}$ and \emph{unlabelled} target features $\{x_j\}_{j=1}^{n_T}$. The \textit{accuracy drop} is
 \begin{equation}
 \Delta = \mathrm{Acc}_S(f) - \mathrm{Acc}_T(f),
 \end{equation}
-and a shift is \textbf{harmful} if $\Delta>\tau$ (default $\tau = 2$\pp; Sec.~\ref{sec:ablation} varies $\tau$). Writing $P(X,Y)=P(X)P(Y|X)$, a \emph{covariate} shift changes only $P(X)$, a \emph{conditional} (concept) shift changes $P(Y|X)$, and a \emph{label} shift changes $P(Y)$ with $P(X|Y)$ fixed~\cite{moreno2012unifying,lipton2018bbse}. A \textbf{signal} is any statistic $s(f,\mathcal{D}_S,\{x_j\})$ computed without target labels. Our goal is to measure how well each $s$ ranks pairs by $\Delta$ and separates harmful from benign shifts.
+and a shift is \textit{harmful} if $\Delta>\tau$ (default $\tau = 2$\pp; Sec.~\ref{sec:ablation} varies $\tau$). Writing $P(X,Y)=P(X)P(Y|X)$, a \emph{covariate} shift changes only $P(X)$, a \emph{conditional} (concept) shift changes $P(Y|X)$, and a \emph{label} shift changes $P(Y)$ with $P(X|Y)$ fixed~\cite{moreno2012unifying,lipton2018bbse}. A \textit{signal} is any statistic $s(f,\mathcal{D}_S,\{x_j\})$ computed without target labels. Our goal is to measure how well each $s$ ranks pairs by $\Delta$ and separates harmful from benign shifts.
 
 % =====================================================================
 \section{Method}
@@ -111,9 +126,9 @@ Fig.~\ref{fig:pipeline} summarizes the study: label-free signals are computed ex
 \subsection{Label-free signals}
 We group thirteen signals by what they look at.
 
-\textbf{Data-only (D).} Mean and maximum per-feature KS statistic; mean per-feature Wasserstein-1 distance on source-standardized features; mean PSI with ten source-quantile bins; unbiased MMD$^2$ with an RBF kernel and median-heuristic bandwidth~\cite{gretton2012kernel}; and the AUC of a domain classifier (gradient-boosted trees, 3-fold cross-fitting) that separates source from target rows~\cite{lopezpaz2017c2st,rabanser2019failing}.
+\textit{Data-only (D).} Mean and maximum per-feature KS statistic; mean per-feature Wasserstein-1 distance on source-standardized features; mean PSI with ten source-quantile bins; unbiased MMD$^2$ with an RBF kernel and median-heuristic bandwidth~\cite{gretton2012kernel}; and the AUC of a domain classifier (gradient-boosted trees, 3-fold cross-fitting) that separates source from target rows~\cite{lopezpaz2017c2st,rabanser2019failing}.
 
-\textbf{Model-aware drift (M), proposed.} Let $d_j$ be the drift of feature $j$ (KS statistic or standardized Wasserstein distance) and $I_j$ the permutation importance~\cite{fisher2019all,breiman2001random} of feature $j$ for model $f$, measured as the accuracy loss on source validation data when feature $j$ is shuffled. With $w_j=\max(I_j,0)/\sum_k \max(I_k,0)$,
+\textit{Model-aware drift (M), proposed.} Let $d_j$ be the drift of feature $j$ (KS statistic or standardized Wasserstein distance) and $I_j$ the permutation importance~\cite{fisher2019all,breiman2001random} of feature $j$ for model $f$, measured as the accuracy loss on source validation data when feature $j$ is shuffled. With $w_j=\max(I_j,0)/\sum_k \max(I_k,0)$,
 \begin{equation}
 \iws(f) \;=\; \sum_{j=1}^{p} w_j\, d_j .
 \label{eq:iws}
@@ -129,7 +144,7 @@ $\mathrm{Acc}_D(f)=\mathbb{E}_{x_U\sim P_D}\big[P(Y{=}g(x_U)\mid x_U)\big]$ for 
 
 Data-only detectors respond to the drift of all $p$ features and so cannot respect this invariance; \iws{} approximates it by down-weighting features with zero importance. The converse does not hold: drift in $X_U$ can lower, leave unchanged or even raise accuracy (Sec.~\ref{sec:synth}), and a change in $P(Y|X)$ is invisible to any function of $X$ alone.
 
-\textbf{Model-output (O).} Drop in mean maximum class probability, i.e.\ difference of confidences (DoC)~\cite{guillory2021doc}; absolute change in predicted positive rate; ATC drop~\cite{garg2022atc}, i.e.\ source accuracy minus ATC's target estimate; importance-weighted drop (IW-drop), i.e.\ source accuracy minus the density-ratio-weighted source accuracy~\cite{shimodaira2000improving,sugiyama2007covariate}; and the increase in disagreement between $f$ and a reference model of a different class~\cite{baek2022agreement}.
+\textit{Model-output (O).} Drop in mean maximum class probability, i.e.\ difference of confidences (DoC)~\cite{guillory2021doc}; absolute change in predicted positive rate; ATC drop~\cite{garg2022atc}, i.e.\ source accuracy minus ATC's target estimate; importance-weighted drop (IW-drop), i.e.\ source accuracy minus the density-ratio-weighted source accuracy~\cite{shimodaira2000improving,sugiyama2007covariate}; and the increase in disagreement between $f$ and a reference model of a different class~\cite{baek2022agreement}.
 
 \subsection{Covariate/conditional decomposition}
 \label{sec:decomp}
@@ -169,7 +184,7 @@ To test whether signals combine, we fit a gradient-boosted regressor that maps a
 \section{Experimental Setup}
 % =====================================================================
 \subsection{Datasets and natural shifts}
-We use seven public tabular datasets with natural domain structure (Table~\ref{tab:data}). Each split attribute defines domains; every ordered pair of domains with at least 400 rows becomes a source$\to$target pair, except temporal splits, where only past$\to$future pairs are kept. The split attribute itself is removed from the features. Bank Marketing has the known leakage variable \texttt{duration} removed and its calendar month removed for the time split. This yields 173 pairs.
+We use seven public tabular datasets with natural domain structure (Table~\ref{tab:data}). Each split attribute defines domains; every ordered pair of domains with at least 400 rows becomes a source$\to$target pair, except temporal splits, where only past$\to$future pairs are kept. The split attribute itself is removed from the features. Bank Marketing has the known leakage variable ``duration'' removed and its calendar month removed for the time split. This yields 173 pairs.
 
 \begin{table}[t]
 \centering
@@ -212,7 +227,7 @@ Table~\ref{tab:corr} ranks all signals. The model-aware \iws{} variants lead: \i
 
 \begin{table}[t]
 \centering
-\caption{Rank correlation of each label-free signal with the accuracy drop and detection of harmful shifts ($\Delta>2$\pp), 1{,}557 evaluations. D = data-only, M = model-aware, O = model-output; $^\dagger$ proposed. Best in bold.}
+\caption{Rank correlation of each label-free signal with the accuracy drop and detection of harmful shifts ($\Delta>2$\pp), 1{,}557 evaluations. D = data-only, M = model-aware, O = model-output; $^\dagger$ proposed. Best underlined.}
 \label{tab:corr}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -220,9 +235,9 @@ Table~\ref{tab:corr} ranks all signals. The model-aware \iws{} variants lead: \i
 \toprule
 Signal & $\rho$ pooled [95\% CI] & $\bar\rho$ within & AUROC & AUPRC \\
 \midrule
-IWS-Wass.$^\dagger$ (M) & \textbf{0.42} [0.37, 0.46] & \textbf{0.36} & 0.69 & 0.84 \\
+IWS-Wass.$^\dagger$ (M) & \underline{0.42} [0.37, 0.46] & \underline{0.36} & 0.69 & 0.84 \\
 Domain-clf. AUC (D) & 0.40 [0.35, 0.44] & 0.29 & 0.66 & 0.81 \\
-IWS-KS$^\dagger$ (M) & 0.40 [0.35, 0.44] & 0.34 & \textbf{0.70} & \textbf{0.86} \\
+IWS-KS$^\dagger$ (M) & 0.40 [0.35, 0.44] & 0.34 & \underline{0.70} & \underline{0.86} \\
 KS (max) (D) & 0.35 [0.30, 0.39] & 0.28 & 0.62 & 0.80 \\
 MMD$^2$ (D) & 0.33 [0.28, 0.37] & 0.26 & 0.63 & 0.82 \\
 Wasserstein (mean) (D) & 0.31 [0.26, 0.34] & 0.27 & 0.65 & 0.82 \\
@@ -246,7 +261,7 @@ Confidence drop (DoC) (O) & 0.07 [0.02, 0.12] & 0.07 & 0.60 & 0.82 \\
 
 Confidence-based estimators, which are among the best label-free accuracy predictors on image benchmarks~\cite{garg2022atc,guillory2021doc}, correlate weakly here: ATC drop $\rho=0.07$ and DoC $\rho=0.07$. Paired tests over the 63 groups confirm that \iws{}-KS beats PSI and MMD after Holm correction ($p_\text{Holm}<10^{-4}$ and $0.022$). Its advantages over mean KS (38 of 63 groups; pooled $\Delta\rho=+0.18$, 95\% CI $[0.13,0.23]$) and over ATC (pooled $\Delta\rho=+0.33$, CI $[0.26,0.39]$) have pooled bootstrap intervals that exclude zero but do not survive Holm correction at the group level ($p_\text{Holm}=0.11$ and $0.10$). Against the domain classifier, the pooled correlations are equal ($\Delta\rho=0.00$), and the AUROC/AUPRC advantage is not significant. We therefore claim that \iws{} is the most reliable single signal, not that it dominates every alternative.
 
-\textbf{No signal wins everywhere.} Table~\ref{tab:perds} breaks correlations down by dataset. Confidence-based signals are excellent on Adult (ATC $\rho=0.87$) and wrong-signed on Elec2 ($-0.50$), where the relation between demand and price direction drifts over time and the models stay confident while they fail. \iws{}-KS is best on Housing and Elec2 and positive on six of seven datasets; Airlines, where carrier changes alter delay patterns rather than inputs, defeats nearly all signals.
+\textit{No signal wins everywhere.} Table~\ref{tab:perds} breaks correlations down by dataset. Confidence-based signals are excellent on Adult (ATC $\rho=0.87$) and wrong-signed on Elec2 ($-0.50$), where the relation between demand and price direction drifts over time and the models stay confident while they fail. \iws{}-KS is best on Housing and Elec2 and positive on six of seven datasets; Airlines, where carrier changes alter delay patterns rather than inputs, defeats nearly all signals.
 
 \begin{table}[t]
 \centering
@@ -257,13 +272,13 @@ Confidence-based estimators, which are among the best label-free accuracy predic
 \toprule
 Dataset & KS & DC-AUC & ATC & IW-drop & IWS-KS \\
 \midrule
-Adult & 0.02 & 0.05 & \textbf{0.87} & 0.81 & 0.14 \\
-COMPAS & 0.22 & \textbf{0.32} & 0.28 & 0.27 & 0.26 \\
-Housing & 0.44 & 0.38 & 0.26 & 0.04 & \textbf{0.53} \\
-Bank & \textbf{0.45} & 0.31 & -0.12 & 0.01 & 0.44 \\
-Elec2 & 0.46 & 0.15 & -0.50 & -0.01 & \textbf{0.59} \\
-Airlines & -0.22 & \textbf{0.20} & -0.03 & -0.04 & -0.13 \\
-Covertype & \textbf{0.70} & 0.65 & 0.01 & 0.21 & 0.57 \\
+Adult & 0.02 & 0.05 & \underline{0.87} & 0.81 & 0.14 \\
+COMPAS & 0.22 & \underline{0.32} & 0.28 & 0.27 & 0.26 \\
+Housing & 0.44 & 0.38 & 0.26 & 0.04 & \underline{0.53} \\
+Bank & \underline{0.45} & 0.31 & -0.12 & 0.01 & 0.44 \\
+Elec2 & 0.46 & 0.15 & -0.50 & -0.01 & \underline{0.59} \\
+Airlines & -0.22 & \underline{0.20} & -0.03 & -0.04 & -0.13 \\
+Covertype & \underline{0.70} & 0.65 & 0.01 & 0.21 & 0.57 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -356,9 +371,9 @@ All signals (harm score)$^\dagger$ & 0.34 & 0.67 & 0.83 & 0.81 \\
 
 \subsection{Ablations}
 \label{sec:ablation}
-\textbf{Model class.} \iws{}-KS correlates with the drop for every model (GBDT 0.45, MLP 0.42, logistic regression 0.33), whereas ATC works only for GBDT (0.16) and is near zero for the other two (0.02), whose confidence is not informative of their errors under shift.
-\textbf{Harm threshold.} Varying $\tau\in\{1,2,5,10\}$\pp leaves the AUROC of \iws{}-KS between 0.70 and 0.71, while ATC falls from 0.60 to 0.49 and the domain classifier stays at 0.66--0.69. \iws{} is thus robust to how ``harmful'' is defined.
-\textbf{Target sample size.} Monitoring often has to act on small batches. Table~\ref{tab:nsize} recomputes four signals for GBDT (seed 0, all 173 pairs) on $n_T\in\{100,300,1000,5000\}$ unlabelled target rows, always scoring against the drop measured on the full sample. \iws{}-KS keeps the highest rank correlation at every size ($\rho=0.45$--$0.47$), and its AUROC with only 100 rows (0.73) matches that with 5{,}000 rows. Mean KS is similarly stable and, in this GBDT-only setting, reaches comparable AUROC (0.72--0.74) at a lower correlation. ATC degrades most at small $n_T$ ($\rho=0.06$ at 100 rows).
+\textit{Model class.} \iws{}-KS correlates with the drop for every model (GBDT 0.45, MLP 0.42, logistic regression 0.33), whereas ATC works only for GBDT (0.16) and is near zero for the other two (0.02), whose confidence is not informative of their errors under shift.
+\textit{Harm threshold.} Varying $\tau\in\{1,2,5,10\}$\pp leaves the AUROC of \iws{}-KS between 0.70 and 0.71, while ATC falls from 0.60 to 0.49 and the domain classifier stays at 0.66--0.69. \iws{} is thus robust to how ``harmful'' is defined.
+\textit{Target sample size.} Monitoring often has to act on small batches. Table~\ref{tab:nsize} recomputes four signals for GBDT (seed 0, all 173 pairs) on $n_T\in\{100,300,1000,5000\}$ unlabelled target rows, always scoring against the drop measured on the full sample. \iws{}-KS keeps the highest rank correlation at every size ($\rho=0.45$--$0.47$), and its AUROC with only 100 rows (0.73) matches that with 5{,}000 rows. Mean KS is similarly stable and, in this GBDT-only setting, reaches comparable AUROC (0.72--0.74) at a lower correlation. ATC degrades most at small $n_T$ ($\rho=0.06$ at 100 rows).
 
 \begin{table}[t]
 \centering
@@ -381,7 +396,7 @@ $n_T$ & KS (mean) & DC-AUC & ATC drop & IWS-KS$^\dagger$ \\
 % =====================================================================
 \section{Discussion}
 % =====================================================================
-\textbf{A taxonomy of failure.} Combining drift magnitude (domain-classifier AUC $\ge0.75$), harm ($\Delta>2$\pp) and the dominant decomposition term places each evaluation in one of four regimes: \emph{stable} (7\%), \emph{benign drift} (22\%), \emph{harmful covariate shift} (17\%) and \emph{conditional failure} (54\%). Only the third is what drift detectors are designed for; the second wastes retraining effort and the fourth goes unnoticed. Table~\ref{tab:tax} shows the mix differs sharply by shift axis. Demographic splits (Adult, COMPAS) contain the most stable and benign cases, whereas temporal and geographic splits (Bank, Elec2, Covertype) are dominated by conditional failures, the regime in which unlabelled monitoring is weakest.
+\textit{A taxonomy of failure.} Combining drift magnitude (domain-classifier AUC $\ge0.75$), harm ($\Delta>2$\pp) and the dominant decomposition term places each evaluation in one of four regimes: \emph{stable} (7\%), \emph{benign drift} (22\%), \emph{harmful covariate shift} (17\%) and \emph{conditional failure} (54\%). Only the third is what drift detectors are designed for; the second wastes retraining effort and the fourth goes unnoticed. Table~\ref{tab:tax} shows the mix differs sharply by shift axis. Demographic splits (Adult, COMPAS) contain the most stable and benign cases, whereas temporal and geographic splits (Bank, Elec2, Covertype) are dominated by conditional failures, the regime in which unlabelled monitoring is weakest.
 
 \begin{table}[t]
 \centering
@@ -405,9 +420,9 @@ Covertype & 0\% & 3\% & 10\% & 87\% \\
 \end{tabular}
 \end{table}
 
-\textbf{Practical guidance.} (i) Replace raw per-feature drift dashboards with importance-weighted drift: it costs one permutation-importance pass per model and filters out drift in ignored features. (ii) Do not rely on model confidence for tabular monitoring; ATC and DoC were wrong-signed on temporal data. (iii) Because conditional shift dominates, budget for a small stream of delayed labels; no amount of unlabelled monitoring recovers a change in $P(Y|X)$. (iv) Treat a saturated domain classifier as ``the data changed'', never as ``the model broke''.
+\textit{Practical guidance.} (i) Replace raw per-feature drift dashboards with importance-weighted drift: it costs one permutation-importance pass per model and filters out drift in ignored features. (ii) Do not rely on model confidence for tabular monitoring; ATC and DoC were wrong-signed on temporal data. (iii) Because conditional shift dominates, budget for a small stream of delayed labels; no amount of unlabelled monitoring recovers a change in $P(Y|X)$. (iv) Treat a saturated domain classifier as ``the data changed'', never as ``the model broke''.
 
-\textbf{Limitations and threats to validity.} Our testbed covers seven datasets and binary classification; regression and high-dimensional data may behave differently. Pairs from the same dataset are not independent, which is why we report within-group statistics and leave-one-dataset-out results. The decomposition relies on density-ratio estimation and is unreliable under near-complete separation, as our synthetic check shows. Permutation importance is computed on source data; under strong shift the features the model relies on may change, and conditional importance~\cite{lundberg2017unified} could refine Eq.~\eqref{eq:iws}. Finally, the strongest recent estimators (PAPE~\cite{bialek2025pape}, Detectron~\cite{ginsberg2023detectron}) were not re-implemented; IW-drop and disagreement serve as their simpler counterparts.
+\textit{Limitations and threats to validity.} Our testbed covers seven datasets and binary classification; regression and high-dimensional data may behave differently. Pairs from the same dataset are not independent, which is why we report within-group statistics and leave-one-dataset-out results. The decomposition relies on density-ratio estimation and is unreliable under near-complete separation, as our synthetic check shows. Permutation importance is computed on source data; under strong shift the features the model relies on may change, and conditional importance~\cite{lundberg2017unified} could refine Eq.~\eqref{eq:iws}. Finally, the strongest recent estimators (PAPE~\cite{bialek2025pape}, Detectron~\cite{ginsberg2023detectron}) were not re-implemented; IW-drop and disagreement serve as their simpler counterparts.
 
 % =====================================================================
 \section{Conclusion}
@@ -415,7 +430,7 @@ Covertype & 0\% & 3\% & 10\% & 87\% \\
 Feature-space change predicts model failure only weakly on natural tabular shifts. Drift is nearly universal, a quarter of drift alarms are benign, and most harmful drops come from a change in $P(Y|X)$ that unlabelled data cannot reveal. Weighting drift by what the model actually uses (\iws{}) is the most reliable label-free signal we tested and is trivial to deploy, but the dominant failure mode calls for monitoring that combines model-aware drift with a small budget of fresh labels. Code, raw results and scripts that regenerate every table and figure are released with the paper.
 
 \balance
-% Bibliography is embedded below so the file compiles without refs.bib
+% Bibliography embedded so the file compiles without refs.bib
 % Generated by IEEEtran.bst, version: 1.14 (2015/08/26)
 \begin{thebibliography}{10}
 \providecommand{\url}[1]{#1}

@@ -40,7 +40,7 @@ DS_LABEL = {"adult": "Adult", "compas": "COMPAS", "housing": "Housing", "bank": 
             "elec": "Elec2", "airlines": "Airlines", "covtype": "Covertype"}
 MODEL_LABEL = {"logreg": "LogReg", "gbdt": "GBDT", "mlp": "MLP"}
 
-plt.rcParams.update({"font.family": "serif", "font.size": 8, "axes.spines.top": False,
+plt.rcParams.update({"font.family": "STIXGeneral", "mathtext.fontset": "stix", "font.size": 8, "axes.spines.top": False,
                      "axes.spines.right": False, "axes.grid": True, "grid.color": "#e6e6e6",
                      "grid.linewidth": 0.5, "axes.edgecolor": "#888888", "legend.frameon": False,
                      "pdf.fonttype": 42})
@@ -139,7 +139,7 @@ def e1_per_dataset(nat: pd.DataFrame):
     for _, r in df.iterrows():
         vals = [r.ks_mean, r.dc_auc, r.atc_drop, r.iw_drop, r.iws_ks]
         best = np.nanmax(vals)
-        cells = [(r"\textbf{%.2f}" % v) if np.isclose(v, best) else "%.2f" % v for v in vals]
+        cells = [(r"\underline{%.2f}" % v) if np.isclose(v, best) else "%.2f" % v for v in vals]
         lines.append(f"{DS_LABEL[r.dataset]} & " + " & ".join(cells) + r" \\")
     lines += [r"\bottomrule", r"\end{tabular}"]
     open(os.path.join(TAB, "e1_per_dataset.tex"), "w").write("\n".join(lines))
@@ -378,7 +378,7 @@ def tex_e1(df):
               "iw_drop": "O", "disagree_inc": "O"}
     best = {c: df[c].max() for c in ["rho", "rho_within", "auroc", "auprc"]}
     for _, r in df.iterrows():
-        f = lambda c, v: (r"\textbf{%.2f}" % v) if np.isclose(v, best[c]) else "%.2f" % v
+        f = lambda c, v: (r"\underline{%.2f}" % v) if np.isclose(v, best[c]) else "%.2f" % v
         nm = r['name'].replace(" (ours)", r"$^\dagger$")
         lines.append(f"{nm} ({groups[r.signal]}) & {f('rho', r.rho)} [{r.rho_lo:.2f}, {r.rho_hi:.2f}] & "
                      f"{f('rho_within', r.rho_within)} & {f('auroc', r.auroc)} & {f('auprc', r.auprc)} \\\\")
