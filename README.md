@@ -37,12 +37,17 @@ src/
   analysis.py           all tables (LaTeX + CSV), figures, significance tests, taxonomy
   case_study.py         per-feature case-study figure (Elec2, Housing)
   ablation_samplesize.py how many unlabeled target rows each signal needs
+docs/
+  HOW_IT_WORKS.md       where things are, pipeline step by step, signals, files
+research/
+  RESEARCH.md           research questions, literature review, gap, method, experiments, sources
+  FINDINGS.md           hypotheses and verdicts, results, ablations, limitations, future work
 scripts/
   download_data.sh      fetch the raw data into data/raw/
   run_all.sh            reproduce everything end to end
 results/                raw per-evaluation CSVs, results/tables/*.tex|csv, summary.json
 figures/                all figures (PDF + PNG, matplotlib); the paper uses the pgfplots versions in paper/tikz/
-paper/                  main.tex (single self-contained file, upload this to Overleaf), main_modular.tex (editable source), refs.bib, figures/, tables/, main.pdf
+paper/                  main.tex (single self-contained file, upload this to Overleaf), main_modular.tex (editable source), refs.bib, tikz/ (figures as code), tables/, main.pdf
 ```
 
 ## Reproduce
