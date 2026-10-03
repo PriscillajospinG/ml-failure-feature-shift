@@ -15,6 +15,9 @@
 \usepackage{multirow}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usetikzlibrary{calc}
 \usetikzlibrary{positioning,arrows.meta,fit}
 \usepackage[hidelinks]{hyperref}
 \usepackage{balance}
@@ -236,7 +239,7 @@ Table~\ref{tab:corr} ranks all signals. The model-aware \iws{} variants lead: \i
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/fig_scatter.pdf}
+\input{tikz/fig_scatter.tex}
 \caption{Accuracy drop versus three signals for every evaluation. The domain-classifier AUC saturates at 1 for most natural shifts, so it cannot rank them; \iws{}-KS spreads the same pairs out. The density-ratio estimate (right) is close to zero for most harmful pairs because their loss comes from $P(Y|X)$. Dashed line: harm threshold $\tau=2$\pp.}
 \label{fig:scatter}
 \end{figure*}
@@ -259,7 +262,7 @@ Fig.~\ref{fig:synth} reports the synthetic suite (mean over three seeds and thre
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=\textwidth]{figures/fig_synthetic.pdf}
+\input{tikz/fig_synthetic.tex}
 \caption{Synthetic shifts with known ground truth. Data-only drift (orange) reacts to every change in $P(X)$, harmful or not. \iws{} (green) ignores irrelevant drift (a) but cannot tell helpful from harmful movement of used features (b, c). No label-free signal sees concept shift (d).}
 \label{fig:synth}
 \end{figure*}
@@ -269,7 +272,7 @@ Fig.~\ref{fig:case} contrasts two natural pairs for GBDT. In Elec2 (time block 0
 
 \begin{figure*}[t]
 \centering
-\includegraphics[width=0.92\textwidth]{figures/fig_case.pdf}
+\input{tikz/fig_case.tex}
 \caption{Per-feature drift (orange) and model importance (blue) for the six most-drifted features of two natural pairs (GBDT). Left: heavy drift in unused features, no harm. Right: moderate drift in the used features, a 27-point accuracy drop.}
 \label{fig:case}
 \end{figure*}
@@ -281,7 +284,7 @@ On the natural testbed (Fig.~\ref{fig:decomp}, Table~\ref{tab:decomp}) the resid
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/fig_decomposition.pdf}
+\input{tikz/fig_decomposition.tex}
 \caption{Mean decomposition of harmful drops (Eq.~\ref{eq:decomp}). The residual, conditional part dominates on every dataset.}
 \label{fig:decomp}
 \end{figure}
@@ -309,7 +312,7 @@ Table~\ref{tab:harm} compares single signals with a meta-regressor evaluated lea
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\columnwidth]{figures/fig_pr.pdf}
+\input{tikz/fig_pr.tex}
 \caption{Precision--recall for detecting harmful shifts. Dotted line: base rate (0.71).}
 \label{fig:pr}
 \end{figure}
