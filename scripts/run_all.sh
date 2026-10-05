@@ -15,5 +15,4 @@ python case_study.py                           # per-feature case-study figure
 python ablation_samplesize.py                  # target sample-size ablation (adds a table)
 python analysis.py                             # refresh tables
 python dump_figdata.py                         # numbers behind the figures -> results/figdata.json
-python ../scripts/make_tikz.py                 # figures as pgfplots code -> paper/tikz/
-cd ../paper && cp ../results/tables/*.tex tables/ && latexmk -pdf -quiet main_modular.tex && python3 ../scripts/make_single_file.py && latexmk -pdf -quiet main.tex
+python ../scripts/make_tikz.py                 # figures as pgfplots code -> results/tikz/

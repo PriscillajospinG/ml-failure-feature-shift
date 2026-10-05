@@ -26,8 +26,7 @@ labels (evaluation only) to measure the real drop and see which signals track it
 5. `src/analysis.py`: correlations, AUROC/AUPRC, significance tests, decomposition, harm-score
    meta-regressor (leave-one-dataset-out), taxonomy, ablations -> `results/tables/`, `figures/`, `results/summary.json`.
 6. `src/case_study.py`, `src/ablation_samplesize.py`: per-feature case study and target-size ablation.
-7. `src/dump_figdata.py` + `scripts/make_tikz.py`: figures as pgfplots code in `paper/tikz/`.
-8. `scripts/make_single_file.py`: inlines tables, figures and bibliography into `paper/main.tex`.
+7. `src/dump_figdata.py` + `scripts/make_tikz.py`: figures as pgfplots code in `results/tikz/`.
 `bash scripts/run_all.sh` does all of it (about 30-40 minutes on a laptop).
 
 ## The 13 signals (all computed without target labels)
@@ -50,5 +49,5 @@ labels (evaluation only) to measure the real drop and see which signals track it
 - `tables/`: every paper table as .tex and .csv, plus raw ablation outputs
 
 ## Editing the paper
-Edit `paper/main_modular.tex` (and `refs.bib`), run `latexmk -pdf main_modular.tex`, then
-`python3 scripts/make_single_file.py` to regenerate the paste-into-Overleaf `main.tex`.
+Edit `paper/main.tex` directly. It is the only LaTeX file: tables, figures and the bibliography are already inside it,
+so it compiles on its own in Overleaf with pdfLaTeX. Regenerated table and figure code lands in `results/tables/` and `results/tikz/`.
