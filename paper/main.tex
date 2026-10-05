@@ -83,7 +83,7 @@ distribution shift, concept drift, model monitoring, performance estimation, tab
 % =====================================================================
 \section{Introduction}
 % =====================================================================
-A model that was accurate at validation time can quietly lose accuracy after deployment because the data it receives no longer resembles the data it was trained on~\cite{quinonero2009dataset,moreno2012unifying}. Labels that would reveal the loss usually arrive late or never, so practitioners rely on \emph{drift detectors}: univariate tests such as Kolmogorov--Smirnov (KS) or the Population Stability Index (PSI), kernel two-sample tests~\cite{gretton2012kernel}, or classifier two-sample tests~\cite{lopezpaz2017c2st,rabanser2019failing}. These tools answer the question ``has $P(X)$ changed?''. The question an operator actually needs answered is different: ``will my model now make more mistakes?''.
+A model that was accurate at validation time can quietly lose accuracy after deployment because the data it receives no longer resembles the data it was trained on~\cite{hinder2024a,liu2023need}. Labels that would reveal the loss usually arrive late or never, so practitioners rely on \emph{drift detectors}: univariate tests such as Kolmogorov--Smirnov (KS) or the Population Stability Index (PSI), kernel two-sample tests~\cite{biggs2023mmdfuse}, or classifier two-sample tests~\cite{pandeva2024e,nguyen2025reliably}. These tools answer the question ``has $P(X)$ changed?''. The question an operator actually needs answered is different: ``will my model now make more mistakes?''.
 
 The two questions come apart for two reasons. A change confined to features the model ignores is harmless, yet it triggers every detector. Conversely, a change in the relation between features and label, $P(Y|X)$, can destroy accuracy while leaving $P(X)$ untouched, so no detector fires. Recent work on tabular benchmarks found that such conditional shifts are common in practice~\cite{liu2023need}, and that the accuracy gap tracks label-distribution shift~\cite{gardner2023tableshift}. What is missing is a direct, large-scale measurement of how well each label-free signal predicts the actual drop, and of \emph{why} it fails when it does.
 
@@ -92,13 +92,15 @@ This research provides that measurement and makes four contributions. The first 
 % =====================================================================
 \section{Related Work}
 % =====================================================================
-\textit{Shift detection.} Classical concept-drift research monitors streams for changes~\cite{gama2004ddm,gama2014survey,lu2019learning,webb2016characterizing}. For batch shift, Rabanser~\textit{et~al.}~\cite{rabanser2019failing} benchmarked two-sample tests on learned representations and found domain classifiers and MMD~\cite{gretton2012kernel} effective at \emph{detecting} shift. Detection, however, is not harm: they report shift presence, not its effect on error.
+\textit{Shift detection.} Concept-drift research monitors streams for changes and has been surveyed for both detection and explanation~\cite{hinder2024a,hinder2024b}. For batch shift, kernel tests~\cite{biggs2023mmdfuse} and deep classifier two-sample tests~\cite{pandeva2024e} are effective at \emph{detecting} shift. Detection, however, is not harm: these tests report shift presence, not its effect on error.
 
-\textit{Label-free performance estimation.} Several methods predict target accuracy from unlabeled data: Average Thresholded Confidence (ATC)~\cite{garg2022atc}, difference of confidences~\cite{guillory2021doc}, agreement-on-the-line~\cite{baek2022agreement,miller2021accuracy}, and importance-weighted estimators under covariate shift~\cite{shimodaira2000improving,sugiyama2007covariate}, recently extended with calibration in PAPE~\cite{bialek2025pape}. Most were validated on image benchmarks such as WILDS~\cite{koh2021wilds}; their behaviour on natural tabular shifts with strong conditional components is less understood.
+\textit{Label-free performance estimation.} Several methods predict target accuracy from unlabeled data: confidence-based estimators such as Average Thresholded Confidence (ATC) and difference of confidences (DoC), evaluated and extended by prediction-matrix~\cite{deng2023confidence} and matrix-norm~\cite{xie2024mano} scores; importance-weighted estimators under covariate shift~\cite{kato2023double}; and calibrated density-ratio estimation in PAPE~\cite{bialek2025pape}. Most were validated on image benchmarks; their behaviour on natural tabular shifts with strong conditional components is less understood.
 
-\textit{Harmful-shift testing.} Podkopaev and Ramdas~\cite{podkopaev2022tracking} test for a rise in risk with labels; Detectron~\cite{ginsberg2023detectron} and Amoukou~\textit{et~al.}~\cite{amoukou2024sequential} detect harmful shift without labels. These methods output an alarm, not an explanation of which features or which kind of shift caused it.
+\textit{Harmful-shift testing.} Detectron~\cite{ginsberg2023detectron}, Amoukou~\textit{et~al.}~\cite{amoukou2024sequential} and Nguyen~\textit{et~al.}~\cite{nguyen2025reliably} detect harmful shift without labels. These methods output an alarm, not an explanation of which features or which kind of shift caused it.
 
-\textit{Explaining shifts and drops.} Zhang~\textit{et~al.}~\cite{zhang2023why} attribute a drop to shifted causal mechanisms with Shapley values; DISDE~\cite{cai2023diagnosing} splits a drop into harder examples, conditional shift and unseen examples; Kulinski and Inouye~\cite{kulinski2023explaining} explain shifts via transport maps. Explanation shift~\cite{mougan2022explanation} monitors SHAP~\cite{lundberg2017unified} distributions, while FMMO~\cite{zafar2026fmmo} shows local attributions can stay stable as error rises. The proposed methodology is complementary: rather than proposing one more detector, the research work measures which signals track degradation across many natural shifts and explains the misses with a decomposition.
+\textit{Tabular shift benchmarks.} TableShift~\cite{gardner2023tableshift} and the WhyShift study~\cite{liu2023need} collect natural shifts on tabular data and show that the accuracy gap depends on which part of the joint distribution moves, while a large comparison of boosted trees and neural networks~\cite{mcelfresh2023neural} shows that no model family wins on every dataset. These resources measure how large the accuracy gap is; the proposed methodology measures how well label-free signals predict it, which is the question a deployed monitor has to answer.
+
+\textit{Explaining shifts and drops.} Zhang~\textit{et~al.}~\cite{zhang2023why} attribute a drop to shifted causal mechanisms with Shapley values; DISDE~\cite{cai2023diagnosing} splits a drop into harder examples, conditional shift and unseen examples; Kulinski and Inouye~\cite{kulinski2023explaining} explain shifts via transport maps. Explanation shift~\cite{mougan2023explanation} monitors SHAP distributions, Decker~\textit{et~al.}~\cite{decker2024explanatory} explain the effect of feature shifts on performance, while FMMO~\cite{zafar2026fmmo} shows local attributions can stay stable as error rises. The proposed methodology is complementary: rather than proposing one more detector, the research work measures which signals track degradation across many natural shifts and explains the misses with a decomposition.
 
 % =====================================================================
 \section{Problem Formulation}
@@ -107,7 +109,7 @@ Let $P_S(X,Y)$ be the source distribution on which a classifier $f$ is trained, 
 \begin{equation}
 \Delta = \mathrm{Acc}_S(f) - \mathrm{Acc}_T(f),
 \end{equation}
-and a shift is \textit{harmful} if $\Delta>\tau$ (default $\tau = 2$\pp; Sec.~\ref{sec:ablation} varies $\tau$). Writing $P(X,Y)=P(X)P(Y|X)$, a \emph{covariate} shift changes only $P(X)$, a \emph{conditional} (concept) shift changes $P(Y|X)$, and a \emph{label} shift changes $P(Y)$ with $P(X|Y)$ fixed~\cite{moreno2012unifying,lipton2018bbse}. A \textit{signal} is any statistic $s(f,\mathcal{D}_S,\{x_j\})$ computed without target labels. The goal of the proposed methodology is to measure how well each $s$ ranks pairs by $\Delta$ and separates harmful from benign shifts.
+and a shift is \textit{harmful} if $\Delta>\tau$ (default $\tau = 2$\pp; Sec.~\ref{sec:ablation} varies $\tau$). Writing $P(X,Y)=P(X)P(Y|X)$, a \emph{covariate} shift changes only $P(X)$, a \emph{conditional} (concept) shift changes $P(Y|X)$, and a \emph{label} shift changes $P(Y)$ with $P(X|Y)$ fixed~\cite{liu2023need,kimura2025graph}. A \textit{signal} is any statistic $s(f,\mathcal{D}_S,\{x_j\})$ computed without target labels. The goal of the proposed methodology is to measure how well each $s$ ranks pairs by $\Delta$ and separates harmful from benign shifts.
 
 % =====================================================================
 \section{Method}
@@ -139,9 +141,9 @@ Fig.~\ref{fig:pipeline} summarizes the study: label-free signals are computed ex
 \subsection{Label-free signals}
 The thirteen signals are grouped by what they look at.
 
-\textit{Data-only (D).} Mean and maximum per-feature KS statistic; mean per-feature Wasserstein-1 distance on source-standardized features; mean PSI with ten source-quantile bins; unbiased MMD$^2$ with an RBF kernel and median-heuristic bandwidth~\cite{gretton2012kernel}; and the AUC of a domain classifier (gradient-boosted trees, 3-fold cross-fitting) that separates source from target rows~\cite{lopezpaz2017c2st,rabanser2019failing}.
+\textit{Data-only (D).} Mean and maximum per-feature KS statistic; mean per-feature Wasserstein-1 distance on source-standardized features; mean PSI with ten source-quantile bins; unbiased MMD$^2$ with an RBF kernel and median-heuristic bandwidth~\cite{biggs2023mmdfuse}; and the AUC of a domain classifier (gradient-boosted trees, 3-fold cross-fitting) that separates source from target rows~\cite{pandeva2024e,nguyen2025reliably}.
 
-\textit{Model-aware drift (M), proposed.} Let $d_j$ be the drift of feature $j$ (KS statistic or standardized Wasserstein distance) and $I_j$ the permutation importance~\cite{fisher2019all,breiman2001random} of feature $j$ for model $f$, measured as the accuracy loss on source validation data when feature $j$ is shuffled. With $w_j=\max(I_j,0)/\sum_k \max(I_k,0)$,
+\textit{Model-aware drift (M), proposed.} Let $d_j$ be the drift of feature $j$ (KS statistic or standardized Wasserstein distance) and $I_j$ the permutation importance~\cite{chamma2024variable} of feature $j$ for model $f$, measured as the accuracy loss on source validation data when feature $j$ is shuffled. With $w_j=\max(I_j,0)/\sum_k \max(I_k,0)$,
 \begin{equation}
 \iws(f) \;=\; \sum_{j=1}^{p} w_j\, d_j .
 \label{eq:iws}
@@ -157,7 +159,7 @@ $\mathrm{Acc}_D(f)=\mathbb{E}_{x_U\sim P_D}\big[P(Y{=}g(x_U)\mid x_U)\big]$ for 
 
 Data-only detectors respond to the drift of all $p$ features and so cannot respect this invariance; \iws{} approximates it by giving zero weight to features with zero importance. The converse does not hold: drift in $X_U$ can even raise accuracy (Sec.~\ref{sec:synth}), and a change in $P(Y|X)$ is invisible to any function of $X$ alone.
 
-\textit{Model-output (O).} Drop in mean maximum class probability, i.e.\ difference of confidences (DoC)~\cite{guillory2021doc}; absolute change in predicted positive rate; ATC drop~\cite{garg2022atc}, i.e.\ source accuracy minus ATC's target estimate; importance-weighted drop (IW-drop), i.e.\ source accuracy minus the density-ratio-weighted source accuracy~\cite{shimodaira2000improving,sugiyama2007covariate}; and the increase in disagreement between $f$ and a reference model of a different class~\cite{baek2022agreement}.
+\textit{Model-output (O).} Following the confidence-based estimators evaluated in~\cite{deng2023confidence,xie2024mano}: drop in mean maximum class probability, i.e.\ difference of confidences (DoC); absolute change in predicted positive rate; ATC drop, i.e.\ source accuracy minus the ATC target estimate; importance-weighted drop (IW-drop), i.e.\ source accuracy minus the density-ratio-weighted source accuracy~\cite{kato2023double}; and the increase in disagreement between $f$ and a reference model of a different class.
 
 \subsection{Covariate/conditional decomposition}
 \label{sec:decomp}
@@ -197,7 +199,7 @@ To test whether signals combine, a gradient-boosted regressor is fitted that map
 \section{Experimental Setup}
 % =====================================================================
 \subsection{Datasets and natural shifts}
-The research work uses seven public tabular datasets with natural domain structure (Table~\ref{tab:data}). Each split attribute defines domains; every ordered pair of domains with at least 400 rows becomes a source$\to$target pair, except temporal splits, where only past$\to$future pairs are kept. The split attribute itself is removed from the features. Bank Marketing has the known leakage variable ``duration'' removed and its calendar month removed for the time split. This yields 173 pairs.
+The research work uses seven public tabular datasets with natural domain structure (Table~\ref{tab:data}), drawn from public repositories and used in recent tabular shift benchmarks~\cite{gardner2023tableshift,liu2023need,mcelfresh2023neural}. Each split attribute defines domains; every ordered pair of domains with at least 400 rows becomes a source$\to$target pair, except temporal splits, where only past$\to$future pairs are kept. The split attribute itself is removed from the features. Bank Marketing has the known leakage variable ``duration'' removed and its calendar month removed for the time split. This yields 173 pairs.
 
 \begin{table}[t]
 \centering
@@ -209,19 +211,22 @@ The research work uses seven public tabular datasets with natural domain structu
 \toprule
 Dataset & Rows & Feat. & Shift axes (domains) & Pairs \\
 \midrule
-Adult~\cite{kohavi1996scaling} & 45{,}222 & 48 & sex, race, age, education, workclass & 34 \\
-COMPAS~\cite{angwin2016machine} & 6{,}172 & 13 & race, sex, age group & 14 \\
-Housing~\cite{pace1997sparse} & 20{,}428 & 15 & ocean proximity, north/south & 14 \\
-Bank~\cite{moro2014data} & 41{,}188 & 62 & time (6 blocks, 2008--10) & 15 \\
-Elec2~\cite{harries1999splice} & 45{,}312 & 6 & time (8 blocks) & 28 \\
-Airlines~\cite{ikonomovska2011learning} & 381{,}161 & 5 & carrier (top 8) & 56 \\
-Covertype~\cite{blackard1999comparative} & 581{,}012 & 54 & wilderness area (4) & 12 \\
+Adult & 45{,}222 & 48 & sex, race, age, education, workclass & 34 \\
+COMPAS & 6{,}172 & 13 & race, sex, age group & 14 \\
+Housing & 20{,}428 & 15 & ocean proximity, north/south & 14 \\
+Bank & 41{,}188 & 62 & time (6 blocks, 2008--10) & 15 \\
+Elec2 & 45{,}312 & 6 & time (8 blocks) & 28 \\
+Airlines & 381{,}161 & 5 & carrier (top 8) & 56 \\
+Covertype & 581{,}012 & 54 & wilderness area (4) & 12 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Models and protocol}
-The models are logistic regression, a histogram gradient-boosted tree ensemble (GBDT, the strongest model family on tabular data~\cite{grinsztajn2022tree,ke2017lightgbm}) and a two-layer MLP (128--64 units), all trained with scikit-learn~\cite{pedregosa2011scikit}. Per source domain, up to 5{,}000 rows are held out for validation and up to 20{,}000 used for training; up to 5{,}000 target rows are sampled. Every pair is run with three seeds that change the sampling and model initialization, giving $173\times3\times3 = 1{,}557$ evaluations.
+The models are logistic regression, a histogram gradient-boosted tree ensemble (GBDT, a strong model family on tabular data~\cite{mcelfresh2023neural}) and a two-layer MLP (128--64 units), all trained with scikit-learn. Per source domain, up to 5{,}000 rows are held out for validation and up to 20{,}000 used for training; up to 5{,}000 target rows are sampled. Every pair is run with three seeds that change the sampling and model initialization, giving $173\times3\times3 = 1{,}557$ evaluations.
+
+\subsection{Implementation details}
+Logistic regression standardizes the features and uses an $\ell_2$ penalty with $C=1$ and at most 2{,}000 iterations. The GBDT uses at most 300 boosting iterations, learning rate 0.08, 31 leaves per tree and early stopping on an internal validation split. The MLP standardizes the features, uses $\ell_2$ weight $10^{-4}$, early stopping and at most 200 epochs. Permutation importance is computed on 2{,}000 randomly drawn source validation rows with three repeats per feature, clipped at zero and normalized to sum to one. The domain classifier is a gradient-boosted ensemble (150 iterations, learning rate 0.1, 15 leaves) trained on the source validation rows and up to 4{,}000 target rows with three-fold cross-fitting. The reference model for the disagreement signal is the GBDT for logistic regression and the MLP, and logistic regression for the GBDT. All random choices are controlled by the seed, so every table and figure is regenerated exactly by the released scripts.
 
 \subsection{Synthetic suite}
 To validate the signals and the decomposition against known ground truth, data are drawn as $X\sim\mathcal{N}(0,I_{10})$ and $P(Y{=}1|x)=\sigma\big(2[1.5x_1+2\sin(1.5x_2)+x_1x_3-0.3]\big)$, so only $x_1,x_2,x_3$ matter. Five shift families are applied at magnitudes $m\in\{0,0.25,0.5,1,1.5,2\}$: (a) mean shift $+m$ of the seven ignored features; (b) mean shift $+m$ of the three used features; (c) spread: $x_2,x_3$ scaled by $1{+}m$, forcing extrapolation; (d) concept shift, where the $x_1$ coefficient is reduced by $1.5m$ with $P(X)$ fixed; and (e) label shift, where $P(Y{=}1)$ is moved to $0.5{+}0.2m$ by class-conditional resampling.
@@ -325,7 +330,7 @@ Confidence drop (DoC) (O) & 0.07 [0.02, 0.12] & 0.07 & 0.60 & 0.82 \\
 \label{fig:scatter}
 \end{figure*}
 
-Confidence-based estimators, which are among the best label-free accuracy predictors on image benchmarks~\cite{garg2022atc,guillory2021doc}, correlate weakly here: ATC drop $\rho=0.07$ and DoC $\rho=0.07$. Paired tests over the 63 groups confirm that \iws{}-KS beats PSI and MMD after Holm correction ($p_\text{Holm}<10^{-4}$ and $0.022$). Its advantages over mean KS (38 of 63 groups; pooled $\Delta\rho=+0.18$, 95\% CI $[0.13,0.23]$) and over ATC (pooled $\Delta\rho=+0.33$, CI $[0.26,0.39]$) have pooled bootstrap intervals that exclude zero but do not survive Holm correction at the group level ($p_\text{Holm}=0.11$ and $0.10$). Against the domain classifier, the pooled correlations are equal ($\Delta\rho=0.00$), and the AUROC/AUPRC advantage is not significant. \iws{} is therefore the most reliable single signal, although it does not dominate every alternative.
+Confidence-based estimators, which are among the best label-free accuracy predictors on image benchmarks~\cite{deng2023confidence,xie2024mano}, correlate weakly here: ATC drop $\rho=0.07$ and DoC $\rho=0.07$. Paired tests over the 63 groups confirm that \iws{}-KS beats PSI and MMD after Holm correction ($p_\text{Holm}<10^{-4}$ and $0.022$). Its advantages over mean KS (38 of 63 groups; pooled $\Delta\rho=+0.18$, 95\% CI $[0.13,0.23]$) and over ATC (pooled $\Delta\rho=+0.33$, CI $[0.26,0.39]$) have pooled bootstrap intervals that exclude zero but do not survive Holm correction at the group level ($p_\text{Holm}=0.11$ and $0.10$). Against the domain classifier, the pooled correlations are equal ($\Delta\rho=0.00$), and the AUROC/AUPRC advantage is not significant. \iws{} is therefore the most reliable single signal, although it does not dominate every alternative.
 
 \textit{No signal wins everywhere.} Table~\ref{tab:perds} breaks correlations down by dataset. Confidence-based signals are excellent on Adult (ATC $\rho=0.87$) and wrong-signed on Elec2 ($-0.50$), where the relation between demand and price direction drifts over time and the models stay confident while they fail. \iws{}-KS is best on Housing and Elec2 and positive on six of seven datasets; Airlines, where carrier changes alter delay patterns rather than inputs, defeats nearly all signals.
 
@@ -611,7 +616,11 @@ Covertype & 0\% & 3\% & 10\% & 87\% \\
 
 \textit{Practical guidance.} Raw per-feature drift dashboards should be replaced with importance-weighted drift, which costs one permutation-importance pass per model and filters out drift in ignored features. Model confidence should not be used for tabular monitoring, because ATC and DoC were wrong-signed on temporal data. Because conditional shift dominates, a small stream of delayed labels must be budgeted, since no amount of unlabelled monitoring recovers a change in $P(Y|X)$. A saturated domain classifier means ``the data changed'' and never ``the model broke''.
 
-\textit{Limitations and threats to validity.} The proposed testbed covers seven datasets and binary classification; regression and high-dimensional data lie outside the scope of this research. Pairs from the same dataset are not independent, so the research work reports within-group statistics and leave-one-dataset-out results. The decomposition relies on density-ratio estimation and is unreliable under near-complete separation, as the synthetic check shows. Permutation importance is computed on source data and held fixed under shift, and conditional importance~\cite{lundberg2017unified} would refine Eq.~\eqref{eq:iws}. Finally, the strongest recent estimators (PAPE~\cite{bialek2025pape}, Detectron~\cite{ginsberg2023detectron}) are not re-implemented; IW-drop and disagreement serve as their simpler counterparts.
+\textit{Relation to prior findings.} The results agree with benchmark studies of natural tabular shifts~\cite{liu2023need,gardner2023tableshift}: when the relation between features and label changes, the accuracy gap grows without any signal in the features. They also complement label-free monitoring methods~\cite{nguyen2025reliably,amoukou2024sequential}, which decide whether a shift is harmful, and explanatory monitoring~\cite{decker2024explanatory}, which relates feature shifts to performance changes: the importance weights of \iws{} supply a cheap, label-free account of which shifted features matter for the deployed model. The negative result for confidence-based estimators~\cite{deng2023confidence,xie2024mano} shows that methods validated on images need re-validation before they are trusted on tabular data.
+
+\textit{Limitations and threats to validity.} The proposed testbed covers seven datasets and binary classification; regression and high-dimensional data lie outside the scope of this research. Pairs from the same dataset are not independent, so the research work reports within-group statistics and leave-one-dataset-out results. The decomposition relies on density-ratio estimation and is unreliable under near-complete separation, as the synthetic check shows. Permutation importance is computed on source data and held fixed under shift, and conditional importance~\cite{chamma2024variable} would refine Eq.~\eqref{eq:iws}. Finally, the strongest recent estimators (PAPE~\cite{bialek2025pape}, Detectron~\cite{ginsberg2023detectron}) are not re-implemented; IW-drop and disagreement serve as their simpler counterparts.
+
+\textit{Future work.} Three extensions follow from the findings. First, a small budget of target labels, in the range of 50 to 200 rows, can be combined with the label-free signals to detect conditional shift, which no label-free signal observes. Second, the same protocol can be repeated on the full TableShift~\cite{gardner2023tableshift} collection to compare the signals on a shared benchmark. Third, regression targets and streaming monitors with sequential tests~\cite{amoukou2024sequential} extend the study from batch classification to continuous deployment.
 
 % =====================================================================
 \section{Conclusion}
@@ -643,29 +652,11 @@ Feature-space change predicts model failure only weakly on natural tabular shift
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
-\bibitem{quinonero2009dataset}
-J.~Qui{\~n}onero-Candela, M.~Sugiyama, A.~Schwaighofer, and N.~D. Lawrence,
-  Eds., \emph{Dataset Shift in Machine Learning}.\hskip 1em plus 0.5em minus
-  0.4em\relax MIT Press, 2009.
-
-\bibitem{moreno2012unifying}
-J.~G. Moreno-Torres, T.~Raeder, R.~Alaiz-Rodr{\'\i}guez, N.~V. Chawla, and
-  F.~Herrera, ``A unifying view on dataset shift in classification,''
-  \emph{Pattern Recognition}, vol.~45, no.~1, pp. 521--530, 2012.
-
-\bibitem{gretton2012kernel}
-A.~Gretton, K.~M. Borgwardt, M.~J. Rasch, B.~Sch{\"o}lkopf, and A.~Smola, ``A
-  kernel two-sample test,'' \emph{Journal of Machine Learning Research},
-  vol.~13, pp. 723--773, 2012.
-
-\bibitem{lopezpaz2017c2st}
-D.~Lopez-Paz and M.~Oquab, ``Revisiting classifier two-sample tests,'' in
-  \emph{International Conference on Learning Representations (ICLR)}, 2017.
-
-\bibitem{rabanser2019failing}
-S.~Rabanser, S.~G{\"u}nnemann, and Z.~C. Lipton, ``Failing loudly: An empirical
-  study of methods for detecting dataset shift,'' in \emph{Advances in Neural
-  Information Processing Systems (NeurIPS)}, vol.~32, 2019.
+\bibitem{hinder2024a}
+F.~Hinder, V.~Vaquet, and B.~Hammer, ``One or two things we know about concept
+  drift---a survey on monitoring in evolving environments. {P}art {A}:
+  Detecting concept drift,'' \emph{Frontiers in Artificial Intelligence},
+  vol.~7, p. 1330257, 2024.
 
 \bibitem{liu2023need}
 J.~Liu, T.~Wang, P.~Cui, and H.~Namkoong, ``On the need for a language
@@ -673,80 +664,52 @@ J.~Liu, T.~Wang, P.~Cui, and H.~Namkoong, ``On the need for a language
   \emph{Advances in Neural Information Processing Systems (NeurIPS), Datasets
   and Benchmarks Track}, 2023.
 
+\bibitem{biggs2023mmdfuse}
+F.~Biggs, A.~Schrab, and A.~Gretton, ``{MMD-FUSE}: Learning and combining
+  kernels for two-sample testing without data splitting,'' in \emph{Advances in
+  Neural Information Processing Systems (NeurIPS)}, 2023.
+
+\bibitem{pandeva2024e}
+T.~Pandeva, T.~Bakker, C.~A. Naesseth, and P.~Forr{\'e}, ``E-valuating
+  classifier two-sample tests,'' \emph{Transactions on Machine Learning
+  Research}, 2024.
+
+\bibitem{nguyen2025reliably}
+V.~Nguyen, C.~Shui, V.~Giri, S.~Arya, A.~Verma, F.~Razak, and R.~G. Krishnan,
+  ``Reliably detecting model failures in deployment without labels,'' in
+  \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2025.
+
 \bibitem{gardner2023tableshift}
 J.~Gardner, Z.~Popovic, and L.~Schmidt, ``Benchmarking distribution shift in
   tabular data with {TableShift},'' in \emph{Advances in Neural Information
   Processing Systems (NeurIPS), Datasets and Benchmarks Track}, 2023.
 
-\bibitem{gama2004ddm}
-J.~Gama, P.~Medas, G.~Castillo, and P.~Rodrigues, ``Learning with drift
-  detection,'' in \emph{Advances in Artificial Intelligence -- SBIA 2004}, ser.
-  Lecture Notes in Computer Science, vol. 3171.\hskip 1em plus 0.5em minus
-  0.4em\relax Springer, 2004, pp. 286--295.
+\bibitem{hinder2024b}
+F.~Hinder, V.~Vaquet, and B.~Hammer, ``One or two things we know about concept
+  drift---a survey on monitoring in evolving environments. {P}art {B}: Locating
+  and explaining concept drift,'' \emph{Frontiers in Artificial Intelligence},
+  vol.~7, p. 1330258, 2024.
 
-\bibitem{gama2014survey}
-J.~Gama, I.~{\v{Z}}liobait{\.e}, A.~Bifet, M.~Pechenizkiy, and A.~Bouchachia,
-  ``A survey on concept drift adaptation,'' \emph{ACM Computing Surveys},
-  vol.~46, no.~4, pp. 44:1--44:37, 2014.
+\bibitem{deng2023confidence}
+W.~Deng, Y.~Suh, S.~Gould, and L.~Zheng, ``Confidence and dispersity speak:
+  Characterizing prediction matrix for unsupervised accuracy estimation,'' in
+  \emph{Proceedings of the 40th International Conference on Machine Learning
+  (ICML)}, ser. PMLR, vol. 202, 2023, pp. 7658--7674.
 
-\bibitem{lu2019learning}
-J.~Lu, A.~Liu, F.~Dong, F.~Gu, J.~Gama, and G.~Zhang, ``Learning under concept
-  drift: A review,'' \emph{IEEE Transactions on Knowledge and Data
-  Engineering}, vol.~31, no.~12, pp. 2346--2363, 2019.
+\bibitem{xie2024mano}
+R.~Xie, A.~Odonnat, V.~Feofanov, W.~Deng, J.~Zhang, and B.~An, ``{MaNo}:
+  Exploiting matrix norm for unsupervised accuracy estimation under
+  distribution shifts,'' in \emph{Advances in Neural Information Processing
+  Systems (NeurIPS)}, 2024.
 
-\bibitem{webb2016characterizing}
-G.~I. Webb, R.~Hyde, H.~Cao, H.~L. Nguyen, and F.~Petitjean, ``Characterizing
-  concept drift,'' \emph{Data Mining and Knowledge Discovery}, vol.~30, no.~4,
-  pp. 964--994, 2016.
-
-\bibitem{garg2022atc}
-S.~Garg, S.~Balakrishnan, Z.~C. Lipton, B.~Neyshabur, and H.~Sedghi,
-  ``Leveraging unlabeled data to predict out-of-distribution performance,'' in
-  \emph{International Conference on Learning Representations (ICLR)}, 2022.
-
-\bibitem{guillory2021doc}
-D.~Guillory, V.~Shankar, S.~Ebrahimi, T.~Darrell, and L.~Schmidt, ``Predicting
-  with confidence on unseen distributions,'' in \emph{Proceedings of the
-  IEEE/CVF International Conference on Computer Vision (ICCV)}, 2021, pp.
-  1134--1144.
-
-\bibitem{baek2022agreement}
-C.~Baek, Y.~Jiang, A.~Raghunathan, and J.~Z. Kolter, ``Agreement-on-the-line:
-  Predicting the performance of neural networks under distribution shift,'' in
-  \emph{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~35,
-  2022.
-
-\bibitem{miller2021accuracy}
-J.~Miller, R.~Taori, A.~Raghunathan, S.~Sagawa, P.~W. Koh, V.~Shankar,
-  P.~Liang, Y.~Carmon, and L.~Schmidt, ``Accuracy on the line: On the strong
-  correlation between out-of-distribution and in-distribution generalization,''
-  in \emph{Proceedings of the 38th International Conference on Machine Learning
-  (ICML)}, ser. PMLR, vol. 139, 2021.
-
-\bibitem{shimodaira2000improving}
-H.~Shimodaira, ``Improving predictive inference under covariate shift by
-  weighting the log-likelihood function,'' \emph{Journal of Statistical
-  Planning and Inference}, vol.~90, no.~2, pp. 227--244, 2000.
-
-\bibitem{sugiyama2007covariate}
-M.~Sugiyama, M.~Krauledat, and K.-R. M{\"u}ller, ``Covariate shift adaptation
-  by importance weighted cross validation,'' \emph{Journal of Machine Learning
-  Research}, vol.~8, pp. 985--1005, 2007.
+\bibitem{kato2023double}
+M.~Kato, K.~Matsui, and R.~Inokuchi, ``Double debiased covariate shift
+  adaptation robust to density-ratio estimation,'' arXiv:2310.16638, 2023.
 
 \bibitem{bialek2025pape}
 J.~Bia{\l}ek, J.~Kivim{\"a}ki, W.~Kuberski, and N.~Perrakis, ``Estimating model
   performance under covariate shift without labels,'' in \emph{Advances in
   Neural Information Processing Systems (NeurIPS)}, 2025.
-
-\bibitem{koh2021wilds}
-P.~W. Koh \emph{et~al.}, ``{WILDS}: A benchmark of in-the-wild distribution
-  shifts,'' in \emph{Proceedings of the 38th International Conference on
-  Machine Learning (ICML)}, ser. PMLR, vol. 139, 2021.
-
-\bibitem{podkopaev2022tracking}
-A.~Podkopaev and A.~Ramdas, ``Tracking the risk of a deployed model and
-  detecting harmful distribution shifts,'' in \emph{International Conference on
-  Learning Representations (ICLR)}, 2022.
 
 \bibitem{ginsberg2023detectron}
 T.~Ginsberg, Z.~Liang, and R.~G. Krishnan, ``A learning based hypothesis test
@@ -757,6 +720,12 @@ T.~Ginsberg, Z.~Liang, and R.~G. Krishnan, ``A learning based hypothesis test
 S.~I. Amoukou, T.~Bewley, S.~Mishra, F.~Lecue, D.~Magazzeni, and M.~Veloso,
   ``Sequential harmful shift detection without labels,'' in \emph{Advances in
   Neural Information Processing Systems (NeurIPS)}, 2024.
+
+\bibitem{mcelfresh2023neural}
+D.~McElfresh, S.~Khandagale, J.~Valverde, V.~Prasad~C, B.~Feuer, C.~Hegde,
+  G.~Ramakrishnan, M.~Goldblum, and C.~White, ``When do neural nets outperform
+  boosted trees on tabular data?'' in \emph{Advances in Neural Information
+  Processing Systems (NeurIPS), Datasets and Benchmarks Track}, 2023.
 
 \bibitem{zhang2023why}
 H.~Zhang, H.~Singh, M.~Ghassemi, and S.~Joshi, ````{W}hy did the model fail?'':
@@ -773,85 +742,31 @@ S.~Kulinski and D.~I. Inouye, ``Towards explaining distribution shifts,'' in
   \emph{Proceedings of the 40th International Conference on Machine Learning
   (ICML)}, ser. PMLR, vol. 202, 2023.
 
-\bibitem{mougan2022explanation}
-C.~Mougan, K.~Broelemann, G.~Kasneci, T.~Tiropanis, and S.~Staab, ``Explanation
-  shift: Detecting distribution shifts on tabular data via the explanation
-  space,'' in \emph{NeurIPS Workshop on Distribution Shifts: Connecting Methods
-  and Applications}, 2022.
+\bibitem{mougan2023explanation}
+C.~Mougan, K.~Broelemann, D.~Masip, G.~Kasneci, T.~Thiropanis, and S.~Staab,
+  ``Explanation shift: How did the distribution shift impact the model?''
+  arXiv:2303.08081, 2023.
 
-\bibitem{lundberg2017unified}
-S.~M. Lundberg and S.-I. Lee, ``A unified approach to interpreting model
-  predictions,'' in \emph{Advances in Neural Information Processing Systems
-  (NeurIPS)}, vol.~30, 2017.
+\bibitem{decker2024explanatory}
+T.~Decker, I.~Thon, A.~Koebler, V.~Tresp, M.~Lebacher, and F.~Buettner,
+  ``Explanatory model monitoring to understand the effects of feature shifts on
+  performance,'' in \emph{Proceedings of the 30th ACM SIGKDD Conference on
+  Knowledge Discovery and Data Mining (KDD)}, 2024.
 
 \bibitem{zafar2026fmmo}
 M.~R. Zafar, A.~El-Sharif, and N.~Khan, ``{FMMO}: Detecting the divergence
   between local attribution and global drift,'' arXiv:2609.06173, 2026.
 
-\bibitem{lipton2018bbse}
-Z.~C. Lipton, Y.-X. Wang, and A.~J. Smola, ``Detecting and correcting for label
-  shift with black box predictors,'' in \emph{Proceedings of the 35th
-  International Conference on Machine Learning (ICML)}, ser. PMLR, vol.~80,
-  2018.
+\bibitem{kimura2025graph}
+M.~Kimura, ``Graph--smoothed {B}ayesian black-box shift estimator and its
+  information geometry,'' in \emph{Advances in Neural Information Processing
+  Systems (NeurIPS)}, 2025.
 
-\bibitem{fisher2019all}
-A.~Fisher, C.~Rudin, and F.~Dominici, ``All models are wrong, but many are
-  useful: Learning a variable's importance by studying an entire class of
-  prediction models simultaneously,'' \emph{Journal of Machine Learning
-  Research}, vol.~20, no. 177, pp. 1--81, 2019.
-
-\bibitem{breiman2001random}
-L.~Breiman, ``Random forests,'' \emph{Machine Learning}, vol.~45, no.~1, pp.
-  5--32, 2001.
-
-\bibitem{kohavi1996scaling}
-R.~Kohavi, ``Scaling up the accuracy of naive-{B}ayes classifiers: A
-  decision-tree hybrid,'' in \emph{Proceedings of the 2nd International
-  Conference on Knowledge Discovery and Data Mining (KDD)}, 1996, pp. 202--207.
-
-\bibitem{angwin2016machine}
-J.~Angwin, J.~Larson, S.~Mattu, and L.~Kirchner, ``Machine bias,'' ProPublica,
-  2016.
-
-\bibitem{pace1997sparse}
-R.~K. Pace and R.~Barry, ``Sparse spatial autoregressions,'' \emph{Statistics
-  \& Probability Letters}, vol.~33, no.~3, pp. 291--297, 1997.
-
-\bibitem{moro2014data}
-S.~Moro, P.~Cortez, and P.~Rita, ``A data-driven approach to predict the
-  success of bank telemarketing,'' \emph{Decision Support Systems}, vol.~62,
-  pp. 22--31, 2014.
-
-\bibitem{harries1999splice}
-M.~Harries, ``{SPLICE-2} comparative evaluation: Electricity pricing,'' The
-  University of New South Wales, Tech. Rep., 1999.
-
-\bibitem{ikonomovska2011learning}
-E.~Ikonomovska, J.~Gama, and S.~D{\v{z}}eroski, ``Learning model trees from
-  evolving data streams,'' \emph{Data Mining and Knowledge Discovery}, vol.~23,
-  no.~1, pp. 128--168, 2011.
-
-\bibitem{blackard1999comparative}
-J.~A. Blackard and D.~J. Dean, ``Comparative accuracies of artificial neural
-  networks and discriminant analysis in predicting forest cover types from
-  cartographic variables,'' \emph{Computers and Electronics in Agriculture},
-  vol.~24, no.~3, pp. 131--151, 1999.
-
-\bibitem{grinsztajn2022tree}
-L.~Grinsztajn, E.~Oyallon, and G.~Varoquaux, ``Why do tree-based models still
-  outperform deep learning on typical tabular data?'' in \emph{Advances in
-  Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks
-  Track}, 2022.
-
-\bibitem{ke2017lightgbm}
-G.~Ke, Q.~Meng, T.~Finley, T.~Wang, W.~Chen, W.~Ma, Q.~Ye, and T.-Y. Liu,
-  ``{LightGBM}: A highly efficient gradient boosting decision tree,'' in
-  \emph{Advances in Neural Information Processing Systems (NeurIPS)}, vol.~30,
-  2017.
-
-\bibitem{pedregosa2011scikit}
-F.~Pedregosa \emph{et~al.}, ``Scikit-learn: Machine learning in {P}ython,''
-  \emph{Journal of Machine Learning Research}, vol.~12, pp. 2825--2830, 2011.
+\bibitem{chamma2024variable}
+A.~Chamma, B.~Thirion, and D.~Engemann, ``Variable importance in
+  high-dimensional settings requires grouping,'' in \emph{Proceedings of the
+  AAAI Conference on Artificial Intelligence}, vol.~38, no.~10, 2024, pp.
+  11\,195--11\,203.
 
 \end{thebibliography}
 
