@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Write the five paper figures as native pgfplots/TikZ files (results/tikz/*.tex).
+"""Write the five paper figures as native pgfplots/TikZ files (paper/figures/*.tex).
 
 Reads results/figdata.json (src/dump_figdata.py). With the figures as LaTeX code the paper
 needs no image files at all, so the single paper/main.tex compiles in Overleaf as is.
@@ -7,7 +7,7 @@ needs no image files at all, so the single paper/main.tex compiles in Overleaf a
 import json, os
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 D = json.load(open(os.path.join(ROOT, "results", "figdata.json")))
-OUT = os.path.join(ROOT, "results", "tikz"); os.makedirs(OUT, exist_ok=True)
+OUT = os.path.join(ROOT, "paper", "figures"); os.makedirs(OUT, exist_ok=True)
 
 COL = {"blue": "2A78D6", "orange": "EB6834", "green": "1BAF7A", "gold": "EDA100", "pink": "E87BA4",
        "dgreen": "008300", "purple": "4A3AA7", "red": "E34948", "grey": "777777"}

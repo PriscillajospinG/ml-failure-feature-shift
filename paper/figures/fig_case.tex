@@ -1,0 +1,27 @@
+\definecolor{fcblue}{HTML}{2A78D6}
+\definecolor{fcorange}{HTML}{EB6834}
+\definecolor{fcgreen}{HTML}{1BAF7A}
+\definecolor{fcgold}{HTML}{EDA100}
+\definecolor{fcpink}{HTML}{E87BA4}
+\definecolor{fcdgreen}{HTML}{008300}
+\definecolor{fcpurple}{HTML}{4A3AA7}
+\definecolor{fcred}{HTML}{E34948}
+\definecolor{fcgrey}{HTML}{777777}
+\pgfplotsset{compat=1.16, fig/.style={tick label style={font=\scriptsize}, label style={font=\scriptsize},
+  title style={font=\scriptsize}, every axis plot/.append style={}, grid=major, grid style={draw=black!10, line width=0.3pt},
+  axis line style={draw=black!50}, tick style={draw=black!50}, legend style={font=\tiny, draw=none, fill=none}}}
+\begin{center}
+\begin{tikzpicture}
+\begin{axis}[name=c0, fig, xbar, bar width=3.5pt, width=0.34\textwidth, height=4.8cm, xmin=0, xmax=1, ytick={0,...,5}, yticklabels={period,nswprice,nswdemand,vicdemand,vicprice,transfer}, y tick label style={font=\tiny}, enlarge y limits=0.12, title={Elec2: time block 0 $\to$ 7\quad acc 81.7$\to$82.4\%}, legend to name=cleg, legend columns=2]
+\addplot[fill=fcorange, draw=none] coordinates {(0.005,0) (0.112,1) (0.203,2) (0.528,3) (0.567,4) (0.734,5)};
+\addplot[fill=fcblue, draw=none] coordinates {(0.031,0) (0.951,1) (0.017,2) (0.000,3) (0.000,4) (0.000,5)};
+\addlegendentry{Drift (KS)}
+\addlegendentry{Model importance $w_j$}
+\end{axis}
+\begin{axis}[name=c1, fig, xbar, bar width=3.5pt, width=0.34\textwidth, height=4.8cm, xmin=0, xmax=1, ytick={0,...,5}, yticklabels={beds per room,rooms per hh,housing median age,median income,longitude,latitude}, y tick label style={font=\tiny}, enlarge y limits=0.12, title={Housing: coastal $\to$ inland\quad acc 88.4$\to$61.3\%}, at={(c0.east)}, anchor=west, xshift=2.2cm]
+\addplot[fill=fcorange, draw=none] coordinates {(0.161,0) (0.200,1) (0.205,2) (0.251,3) (0.482,4) (0.550,5)};
+\addplot[fill=fcblue, draw=none] coordinates {(0.057,0) (0.012,1) (0.024,2) (0.244,3) (0.241,4) (0.187,5)};
+\end{axis}
+\end{tikzpicture}\\[2pt]
+\ref{cleg}
+\end{center}
