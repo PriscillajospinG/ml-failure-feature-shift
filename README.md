@@ -189,9 +189,10 @@ python analysis.py            # tables, significance tests, taxonomy, figures
 python case_study.py          # per-feature case study (Elec2, Housing)
 python ablation_samplesize.py # target sample-size ablation
 python dump_figdata.py        # numbers behind the figures
-python ../scripts/make_tikz.py          # figures as pgfplots code
-cd ../paper && latexmk -pdf main_modular.tex && python3 ../scripts/make_single_file.py
+python ../scripts/make_tikz.py          # figures as pgfplots code -> results/tikz/
 ```
+
+The paper itself is edited directly in `paper/main.tex` (see section 10).
 
 ## 9. Repository layout
 
@@ -208,19 +209,17 @@ src/
 scripts/
   download_data.sh        fetch raw data into data/raw/
   run_all.sh              reproduce everything end to end
-  make_tikz.py            write the figures as pgfplots code (paper/tikz/)
-  make_single_file.py     inline tables, figures and bibliography into paper/main.tex
+  make_tikz.py            write the figures as pgfplots code (results/tikz/)
 docs/HOW_IT_WORKS.md      pipeline step by step
 research/                 RESEARCH.md (plan, literature) and FINDINGS.md (analysis)
 results/                  raw per-evaluation CSVs, tables/, summary.json, figdata.json
 figures/                  figures as PDF and PNG
-paper/                    main.tex (single file), main_modular.tex (editable source),
-                          refs.bib, tables/, tikz/, main.pdf
+paper/                    main.tex (the only LaTeX file), main.pdf, refs.bib (bibliography source)
 ```
 
 ## 10. Overleaf
 
-`paper/main.tex` is self-contained: tables, figures (native pgfplots) and the bibliography are inlined. Paste it into a new Overleaf project, choose **pdfLaTeX**, and compile. Edit `paper/main_modular.tex` and run `scripts/make_single_file.py` to regenerate it.
+`paper/main.tex` is the only LaTeX file and the one to edit. It is self-contained: tables, figures (native pgfplots) and the bibliography are written inside it, so no other file or folder is needed. Paste it into a new Overleaf project, choose **pdfLaTeX**, and compile. The generated table and figure code used to write it is kept in `results/tables/` and `results/tikz/`.
 
 ## 11. References used in the paper (all 2023 or later)
 
