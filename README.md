@@ -3,7 +3,7 @@
 
 Code, results and the IEEE conference paper for an empirical study of **which label-free feature-space signals actually predict a model's accuracy drop under distribution shift**, and why most drift alarms do not.
 
-- **Paper:** [`paper/main.pdf`](paper/main.pdf), source in [`paper/main.tex`](paper/main.tex) (upload the `paper/` folder to Overleaf and compile with pdfLaTeX)
+- **Paper:** [`paper/main.pdf`](paper/main.pdf), source in [`paper/main.tex`](paper/main.tex) (one self-contained file, paste it into Overleaf and compile with pdfLaTeX)
 - **Research notes:** [`research/RESEARCH.md`](research/RESEARCH.md) (questions, literature, plan) and [`research/FINDINGS.md`](research/FINDINGS.md) (results and analysis)
 - **Step-by-step pipeline guide:** [`docs/HOW_IT_WORKS.md`](docs/HOW_IT_WORKS.md)
 
@@ -189,10 +189,10 @@ python analysis.py            # tables, significance tests, taxonomy, figures
 python case_study.py          # per-feature case study (Elec2, Housing)
 python ablation_samplesize.py # target sample-size ablation
 python dump_figdata.py        # numbers behind the figures
-python ../scripts/make_tikz.py          # figures as pgfplots code -> paper/figures/
+python ../scripts/make_tikz.py          # figures as pgfplots code -> results/tikz/
 ```
 
-Then compile the paper: `cd ../paper && cp ../results/tables/*.tex tables/ && latexmk -pdf main.tex`.
+The paper itself is edited directly in `paper/main.tex` (see section 10).
 
 ## 9. Repository layout
 
@@ -209,17 +209,17 @@ src/
 scripts/
   download_data.sh        fetch raw data into data/raw/
   run_all.sh              reproduce everything end to end
-  make_tikz.py            write the figures as pgfplots code (paper/figures/)
+  make_tikz.py            write the figures as pgfplots code (results/tikz/)
 docs/HOW_IT_WORKS.md      pipeline step by step
 research/                 RESEARCH.md (plan, literature) and FINDINGS.md (analysis)
 results/                  raw per-evaluation CSVs, tables/, summary.json, figdata.json
 figures/                  figures as PDF and PNG
-paper/                    main.tex, refs.bib, figures/*.tex (pgfplots figures), tables/*.tex, main.pdf
+paper/                    main.tex (the only paper file, self-contained), main.pdf
 ```
 
 ## 10. Overleaf
 
-`paper/main.tex` is the paper. The figures (`paper/figures/*.tex`, native pgfplots code), tables (`paper/tables/*.tex`) and bibliography (`paper/refs.bib`) are separate files that `main.tex` loads. Upload the whole `paper/` folder (or a zip of it) to a new Overleaf project, set the main document to `main.tex`, choose **pdfLaTeX**, and compile. Keeping them separate also keeps `main.tex` short (about 37 KB).
+`paper/main.tex` is the only paper file and the one to edit. It is self-contained: tables, figures (native pgfplots) and the bibliography are written inside it, so no other file or folder is needed. Paste it into a new Overleaf project, choose **pdfLaTeX**, and compile. Generated table and figure code is kept in `results/tables/` and `results/tikz/`.
 
 ## 11. References used in the paper (all 2023 or later)
 
